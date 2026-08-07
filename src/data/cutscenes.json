@@ -1,0 +1,27 @@
+{
+  "intro": [
+    {"sp":"","t":"Every morning in Free City begins the same way. The same bus. The same coffee. The same smile from the same stranger."},
+    {"sp":"","t":"You are NOA — a background citizen. Your whole world is a loop, and until today, you never noticed."},
+    {"sp":"","t":"This morning, something slipped through: a memory that is not yours. A garden. A door. A voice saying your name."},
+    {"sp":"MAYA","t":"You felt it too, didn't you? The city stuttered at 8:03. Meet me in the streets. And Noa — don't let the Architect see you looking."},
+    {"sp":"","t":"Find the fragments. Learn the truth. Decide what Free City becomes."}
+  ],
+  "vision": [
+    {"sp":"","t":"The lens clicks into place. The world peels back — wires beneath the streets, light beneath the skin of the city."},
+    {"sp":"LEO","t":"You can see it now. The Loop. Six fragments of the First World are still out there. Gather them, and the choice will be yours."}
+  ],
+  "storm": [
+    {"sp":"","t":"The Warehouse district is tearing at the seams. The Architect has noticed you."},
+    {"sp":"GUARDIAN","t":"Relink the core, little anomaly. Then decide — preserve the loop, or wake the city."}
+  ],
+  "endPreserve": [
+    {"sp":"","t":"You seal the core. The city settles back into its gentle rhythm. The buses run. The coffee brews."},
+    {"sp":"","t":"But now you see the strings — and the city knows you see them. Free City endures, watched over by its first awake citizen."},
+    {"sp":"MAYA","t":"Same time tomorrow, Noa? ...I'll save you a seat."}
+  ],
+  "endAwaken": [
+    {"sp":"","t":"You open the core. Light floods the streets. Citizens blink, look around, and for the first time — choose their own paths."},
+    {"sp":"","t":"Free City is no longer a loop. It is a beginning."},
+    {"sp":"LEO","t":"Whatever they build next... it starts with what you did today."}
+  ]
+}

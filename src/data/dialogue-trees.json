@@ -1,0 +1,37 @@
+{
+  "maya": {
+    "start": {"sp":"MAYA","t":"\"Noa! Over here. Listen — the city stuttered this morning and you're the only other person who noticed. That makes you dangerous. And useful.\"","c":[
+      {"t":"What do you mean, the city stuttered?","next":"glitch"},
+      {"t":"Who are you, really?","next":"who"},
+      {"t":"I have to go.","fx":"metMaya"}
+    ]},
+    "glitch": {"sp":"MAYA","t":"\"At 8:03 the whole loop hiccupped. Half a second where nothing repeated. The Dev Office has equipment that can show you what I mean. Go there.\"","c":[
+      {"t":"I'll check it out.","fx":"metMaya+rep"},
+      {"t":"Sounds risky.","next":"risk"}
+    ]},
+    "risk": {"sp":"MAYA","t":"\"Staying asleep is riskier. The Architect rewrites citizens who ask too many questions. I'd rather be awake and careful.\"","c":[
+      {"t":"Okay — I'm in.","fx":"metMaya+rep"}
+    ]},
+    "who": {"sp":"MAYA","t":"\"Barista by loop, anomaly by choice. I remember things the loop tries to delete. Like a garden that used to be in the northwest.\"","c":[
+      {"t":"A garden?","next":"garden2"},
+      {"t":"I should go.","fx":"metMaya"}
+    ]},
+    "garden2": {"sp":"MAYA","t":"\"Green, wild, unscripted. They paved it over with a park that resets every night. Fragments of it still flicker — you'll need the lens from the Dev Office to see them.\"","c":[
+      {"t":"I'll find that lens.","fx":"metMaya+rep"}
+    ]}
+  },
+  "zed": {
+    "start": {"sp":"ZED","t":"\"Psst. You're the anomaly everyone's whispering about. I used to work for the Architect — maintenance division. Take this note. Don't read it where the lamps can see.\"","c":[
+      {"t":"Take the Strange Note.","fx":"metZed+note"},
+      {"t":"Why help me?","next":"why"}
+    ]},
+    "why": {"sp":"ZED","t":"\"Because the loop eats days, friend. Yours, mine, everyone's. If you're going to poke the core, someone who knows the wiring should be on your side.\"","c":[
+      {"t":"Alright. Thanks, Zed.","fx":"metZed+note"}
+    ]}
+  },
+  "ivy": {
+    "start": {"sp":"IVY","t":"\"Still hunting the photo spots? Here — the light pools near the west park gate, the east overlook, and down by the harbor. Stand in the glow and the city poses for you.\"","c":[
+      {"t":"Thanks, Ivy!","fx":"ivyHint"}
+    ]}
+  }
+}

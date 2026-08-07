@@ -3,6 +3,7 @@ import type { IRenderer, RenderWorldState } from './renderer';
 import { gridToScreen } from './iso-math';
 import { Camera } from '../engine/camera';
 import { dayFactor } from '../game/world-clock';
+import { FRAGMENTS } from '../game/vision';
 import { createSkyEntities, drawSky, type SkyEntities } from './sky';
 import { drawCityAnimated, drawCityBase, getEmitters, type EmitterPoint } from './city';
 import { ParticleSystem } from './particles';
@@ -20,7 +21,7 @@ interface RainDrop {
   z: number;
 }
 
-/** P4 renderer: living city + characters + interiors. */
+/** P5+P6 renderer: living city + characters + interiors + vision + quest markers. */
 export class PixiRenderer implements IRenderer {
   private app = new Application();
   private skyGfx = new Graphics();
@@ -29,8 +30,10 @@ export class PixiRenderer implements IRenderer {
   private animGfx = new Graphics();
   private trafficGfx = new Graphics();
   private particleGfx = new Graphics();
+  private markerGfx = new Graphics();
   private weatherGfx = new Graphics();
   private nightGfx = new Graphics();
+  private visionGfx = new Graphics();
   private readonly entities = new EntityRenderer();
   private readonly interior = new InteriorRenderer();
   private fpsText: Text | null = null;
@@ -78,6 +81,7 @@ export class PixiRenderer implements IRenderer {
     this.worldLayer.addChild(this.animGfx);
     this.worldLayer.addChild(this.trafficGfx);
     this.worldLayer.addChild(this.particleGfx);
+    this.worldLayer.addChild(this.markerGfx);
     this.worldLayer.addChild(this.entities.container);
     for (const label of labels) this.worldLayer.addChild(label);
 
@@ -87,6 +91,7 @@ export class PixiRenderer implements IRenderer {
     this.app.stage.addChild(this.worldLayer);
     this.app.stage.addChild(this.weatherGfx);
     this.app.stage.addChild(this.nightGfx);
+    this.app.stage.addChild(this.visionGfx);
     this.app.stage.addChild(this.interior.container);
 
     if (typeof location !== 'undefined' && location.search.includes('fps=1')) {
@@ -115,6 +120,7 @@ export class PixiRenderer implements IRenderer {
     this.skyGfx.visible = !inInterior;
     this.weatherGfx.visible = !inInterior;
     this.nightGfx.visible = !inInterior;
+    this.visionGfx.visible = !inInterior;
     this.interior.container.visible = Boolean(inInterior);
 
     if (inInterior) {
@@ -134,6 +140,7 @@ export class PixiRenderer implements IRenderer {
     this.drawTraffic(dt);
     this.drawParticles(dt);
     this.drawWeather(dt);
+    this.drawMarkers();
 
     this.entities.draw(
       { x: this.state.playerX, y: this.state.playerY, dir: this.state.playerDir, moving: this.state.playerMoving, movePhase: this.state.playerMovePhase },
@@ -153,7 +160,47 @@ export class PixiRenderer implements IRenderer {
       this.nightGfx.rect(0, 0, this.width, this.height).fill({ color: 0x060a1c, alpha: (1 - day) * 0.55 });
     }
 
+    this.drawVision();
     this.tickFps(dtMs);
+  }
+
+  private drawMarkers(): void {
+    if (!this.state) return;
+    this.markerGfx.clear();
+
+    if (this.state.questTarget) {
+      const p = gridToScreen(this.state.questTarget.x, this.state.questTarget.y);
+      const pulse = 9 + Math.sin(this.timeMs * 0.006) * 3;
+      this.markerGfx.circle(p.x, p.y - 62, pulse).stroke({ width: 2, color: 0xffdf70 });
+      this.markerGfx
+        .poly([p.x, p.y - 76, p.x - 5, p.y - 84, p.x + 5, p.y - 84])
+        .fill(0xffdf70);
+    }
+
+    for (const spot of this.state.photoSpots) {
+      const p = gridToScreen(spot.x, spot.y);
+      this.markerGfx.circle(p.x, p.y, 12 + Math.sin(this.timeMs * 0.008) * 3).fill({ color: 0xffdf70, alpha: 0.27 });
+    }
+  }
+
+  private drawVision(): void {
+    if (!this.state) return;
+    this.visionGfx.clear();
+    if (!this.state.visionOn) return;
+
+    this.visionGfx.rect(0, 0, this.width, this.height).fill({ color: 0x14ff78, alpha: 0.06 });
+    for (let y = 0; y < this.height; y += 4) {
+      this.visionGfx.moveTo(0, y).lineTo(this.width, y).stroke({ width: 1, color: 0x50ff96, alpha: 0.05 });
+    }
+
+    FRAGMENTS.forEach((f, i) => {
+      if (this.state!.fragments.includes(i)) return;
+      const p = gridToScreen(f.x, f.y);
+      const sx = p.x - this.camera.x;
+      const sy = p.y - this.camera.y;
+      const glow = 8 + Math.sin(this.timeMs * 0.01 + i) * 3;
+      this.visionGfx.circle(sx, sy - 20, glow).fill(0x5cffa0);
+    });
   }
 
   private tickFps(dtMs: number): void {
@@ -235,6 +282,6 @@ export class PixiRenderer implements IRenderer {
   }
 
   end(): void {
-    // post effects (Glitch Vision bloom) land in P5/P6
+    // post effects land in P8 polish
   }
 }

@@ -9,26 +9,42 @@
     <style>
       html, body { margin: 0; height: 100%; background: #0a1629; overflow: hidden; font-family: monospace; }
       canvas { display: block; }
+      .hidden { display: none !important; }
+      .panel { position: fixed; z-index: 4; background: #0a1629ea; border: 1px solid #83d9ff66; border-radius: 10px; color: #eaf6ff; padding: 10px 12px; font-size: 11px; line-height: 1.6; pointer-events: none; }
       #boot { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; color: #5cffa0; font-size: 14px; background: #0a1629; letter-spacing: 2px; z-index: 10; }
+      #hud { top: 12px; left: 12px; min-width: 190px; }
+      #hud b, #quest b, #ws b, #inv b { color: #ffdf70; }
+      .bar { height: 7px; background: #1c2c40; border-radius: 4px; overflow: hidden; margin: 2px 0 4px; border: 1px solid #ffffff14; }
+      .bar > i { display: block; height: 100%; transition: width 0.3s; }
+      #quest { top: 12px; right: 12px; max-width: 250px; }
+      #quest .side { color: #9fc9e8; font-size: 10px; margin-top: 4px; border-top: 1px solid #ffffff18; padding-top: 4px; }
+      #quest .done { color: #61e08a; text-decoration: line-through; }
+      #ws { top: 140px; left: 12px; }
+      #inv { top: 238px; left: 12px; max-width: 180px; }
+      #mini { position: fixed; right: 12px; top: 200px; width: 96px; height: 96px; background: #0b1930ea; border: 1px solid #83d9ff66; border-radius: 8px; z-index: 6; }
+      #prompt { position: fixed; left: 50%; bottom: 88px; transform: translateX(-50%); z-index: 4; background: #ffdf70; color: #1a1400; font: bold 11px monospace; padding: 5px 14px; border-radius: 16px; box-shadow: 0 2px 10px #0008; opacity: 0; transition: 0.15s; pointer-events: none; }
+      #prompt.on { opacity: 1; }
+      #feed { position: fixed; left: 12px; bottom: 150px; z-index: 5; display: flex; flex-direction: column; gap: 4px; pointer-events: none; }
+      .feedmsg { background: #0a1629d0; border-left: 3px solid #ffdf70; color: #eaf6ff; font: 10px monospace; padding: 5px 9px; border-radius: 0 7px 7px 0; opacity: 0.95; transition: opacity 0.6s; }
+      #version { position: fixed; left: 50%; top: 10px; transform: translateX(-50%); z-index: 9; background: #ffdf70; color: #1a1400; font: bold 11px monospace; padding: 5px 12px; border-radius: 20px; box-shadow: 0 2px 10px #0008; }
       #touch { position: fixed; display: flex; justify-content: space-between; left: 14px; right: 14px; bottom: max(14px, env(safe-area-inset-bottom)); pointer-events: none; z-index: 5; }
       .pad { display: grid; grid-template: repeat(3, 52px) / repeat(3, 52px); gap: 4px; pointer-events: auto; }
-      .pad button, #act, #music, #leave { color: #fff; background: #102b49e6; border: 1px solid #8ddcff88; border-radius: 14px; font: bold 18px monospace; touch-action: none; }
+      .pad button, #act, #music, #leave, #debug button { color: #fff; background: #102b49e6; border: 1px solid #8ddcff88; border-radius: 14px; font: bold 18px monospace; touch-action: none; }
       .pad button[data-action="up"] { grid-column: 2; }
       .pad button[data-action="left"] { grid-column: 1; grid-row: 2; }
       .pad button[data-action="right"] { grid-column: 3; grid-row: 2; }
       .pad button[data-action="down"] { grid-column: 2; grid-row: 3; }
       #act { align-self: center; width: 72px; height: 72px; border-radius: 50%; color: #ffdf70; font-size: 14px; pointer-events: auto; }
-      #music { position: fixed; right: 12px; bottom: 100px; padding: 6px 10px; font-size: 11px; color: #ffdf70; pointer-events: auto; }
+      #music { position: fixed; right: 12px; bottom: 100px; padding: 6px 10px; font-size: 11px; color: #ffdf70; pointer-events: auto; z-index: 7; }
       #leave { position: fixed; left: 12px; bottom: 100px; padding: 8px 12px; font-size: 11px; color: #ffdf70; z-index: 16; }
-      .hidden { display: none !important; }
-      #feed { position: fixed; left: 12px; bottom: 150px; z-index: 5; display: flex; flex-direction: column; gap: 4px; pointer-events: none; }
-      .feedmsg { background: #0a1629d0; border-left: 3px solid #ffdf70; color: #eaf6ff; font: 10px monospace; padding: 5px 9px; border-radius: 0 7px 7px 0; opacity: 0.95; transition: opacity 0.6s; }
+      #debug { position: fixed; right: 12px; bottom: 140px; z-index: 6; display: flex; flex-direction: column; gap: 4px; }
+      #debug button { font-size: 9px; padding: 4px 7px; text-align: left; color: #c9b6ff; border-color: #8d6dff77; background: #241a3fea; }
       #mg { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: #000a; z-index: 20; padding: 16px; }
-      #mg-box { width: min(540px, 100%); background: #0e1c34; border: 1px solid #ffffff2a; border-radius: 14px; padding: 18px; color: #e6f0ff; max-height: 88vh; overflow: auto; }
-      #mg-title { margin: 0 0 8px; color: #ffdc68; font-size: 16px; }
-      #mg-desc { line-height: 1.55; font-size: 13px; color: #cfe0f5; white-space: pre-wrap; }
-      #mg-actions { display: grid; gap: 7px; margin-top: 12px; }
-      #mg-actions button { font: 12px monospace; text-align: left; padding: 9px 11px; background: #1c3459; border: 1px solid #ffffff26; border-radius: 8px; color: #fff; }
+      #mg-box, .dlg-box { width: min(540px, 100%); background: #0e1c34; border: 1px solid #ffffff2a; border-radius: 14px; padding: 18px; color: #e6f0ff; max-height: 88vh; overflow: auto; }
+      #mg-title, .dlg-box h2 { margin: 0 0 8px; color: #ffdc68; font-size: 16px; }
+      #mg-desc, .dlg-box p { line-height: 1.55; font-size: 13px; color: #cfe0f5; white-space: pre-wrap; }
+      #mg-actions, #dlg-choices { display: grid; gap: 7px; margin-top: 12px; }
+      #mg-actions button, #dlg-choices button { font: 12px monospace; text-align: left; padding: 9px 11px; background: #1c3459; border: 1px solid #ffffff26; border-radius: 8px; color: #fff; }
       .mg-pads { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
       .mg-pads button { height: 52px; border-radius: 10px; border: 1px solid #fff2; }
       .mg-dials { display: flex; gap: 14px; justify-content: center; margin: 14px 0; }
@@ -43,11 +59,31 @@
       .mg-zone { position: absolute; top: 0; bottom: 0; background: #3dffa066; }
       .mg-mark { position: absolute; top: 0; bottom: 0; width: 6px; background: #ffdf70; }
       .mg-log { margin-top: 8px; font-size: 11px; color: #9fc9e8; line-height: 1.7; }
+      #dlg { position: fixed; inset: 0; display: flex; align-items: flex-end; justify-content: center; background: #0008; z-index: 19; padding: 16px; }
+      #dlg-speaker { color: #ffdc68; font-weight: bold; font-size: 13px; margin-bottom: 6px; }
+      #cine { position: fixed; inset: 0; z-index: 28; }
+      #cine .bar-t, #cine .bar-b { position: absolute; left: 0; right: 0; height: 12vh; background: #000; }
+      #cine .bar-t { top: 0; }
+      #cine .bar-b { bottom: 0; }
+      #cine-bg { position: absolute; left: 0; right: 0; top: 12vh; bottom: 12vh; background: linear-gradient(180deg, #0a1426, #132036); display: flex; align-items: flex-end; justify-content: center; padding: 5vh 8vw; cursor: pointer; }
+      #cine-speaker { color: #ffdf70; font: bold 13px monospace; margin-bottom: 8px; min-height: 16px; }
+      #cine-text { color: #eaf6ff; font: 14px monospace; line-height: 1.7; min-height: 90px; text-shadow: 0 1px 4px #000; max-width: 640px; }
+      #cine-skip { position: absolute; top: 13vh; right: 16px; background: #102b49ea; color: #ffdf70; border: 1px solid #8ddcff88; border-radius: 8px; padding: 6px 10px; font: 10px monospace; z-index: 29; }
+      #pause { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: #000c; z-index: 25; }
+      #pause button { font: 12px monospace; text-align: left; padding: 9px 11px; background: #1c3459; border: 1px solid #ffffff26; border-radius: 8px; color: #fff; }
       @media (min-width: 820px) { #touch { opacity: 0.55; transform: scale(0.85); transform-origin: bottom left; } }
     </style>
   </head>
   <body>
     <div id="boot">FREE CITY: ODYSSEY — loading…</div>
+    <div id="version">v0.7.0 · ODYSSEY</div>
+    <div id="hud" class="panel"><b>FREE CITY</b> · Odyssey<br />☀ Day <span id="hud-day">1</span> · <span id="hud-time">08:00</span><br />Energy<div class="bar"><i id="hud-energy" style="width: 100%; background: #61e08a"></i></div>💰 $<span id="hud-cash">40</span> · ⭐ Rep <span id="hud-rep">0</span><br />📍 <span id="hud-district">Downtown</span></div>
+    <div id="quest" class="panel"><b>MAIN MISSION</b><br /><span id="q-main">Explore the district.</span><div id="q-sides"></div></div>
+    <div id="ws" class="panel"><b>WORLD STATUS</b><br /><span id="ws-weather">Clear skies</span><br />Level <span id="ws-level">1</span> · XP <span id="ws-xp">0/100</span><br />Fragments <span id="ws-frag">0/6</span></div>
+    <div id="inv" class="panel"><b>INVENTORY</b><br /><span id="inv-list">(empty)</span></div>
+    <canvas id="mini" width="96" height="96"></canvas>
+    <div id="prompt"></div>
+    <div id="feed"></div>
     <div id="touch">
       <div class="pad">
         <button data-action="up">▲</button>
@@ -59,13 +95,50 @@
     </div>
     <button id="music">♫ MUSIC</button>
     <button id="leave" class="hidden">◀ LEAVE</button>
-    <div id="feed"></div>
+    <div id="debug">
+      <button id="dbg-weather">⚡ Weather</button>
+      <button id="dbg-robbery">⚡ Robbery</button>
+      <button id="dbg-xp">⚡ +100 XP</button>
+      <button id="dbg-vision">⚡ Vision</button>
+      <button id="dbg-items">⚡ All Items</button>
+      <button id="dbg-intro">⚡ Replay Intro</button>
+    </div>
     <div id="mg" class="hidden">
       <div id="mg-box">
         <h2 id="mg-title"></h2>
         <p id="mg-desc"></p>
         <div id="mg-body"></div>
         <div id="mg-actions"></div>
+      </div>
+    </div>
+    <div id="dlg" class="hidden">
+      <div class="dlg-box">
+        <div id="dlg-speaker"></div>
+        <p id="dlg-text"></p>
+        <div id="dlg-choices"></div>
+      </div>
+    </div>
+    <div id="cine" class="hidden">
+      <div class="bar-t"></div>
+      <div class="bar-b"></div>
+      <button id="cine-skip">SKIP ▶</button>
+      <div id="cine-bg">
+        <div>
+          <div id="cine-speaker"></div>
+          <div id="cine-text"></div>
+        </div>
+      </div>
+    </div>
+    <div id="pause" class="hidden">
+      <div class="dlg-box">
+        <h2>PAUSED</h2>
+        <p>Free City is waiting for you.</p>
+        <div style="display: grid; gap: 7px; margin-top: 12px">
+          <button id="p-resume">▶ Resume</button>
+          <button id="p-save">💾 Save Now</button>
+          <button id="p-music">♫ Toggle Music</button>
+          <button id="p-reset">🗑 Reset Save</button>
+        </div>
       </div>
     </div>
     <script type="module" src="/src/main.ts"></script>

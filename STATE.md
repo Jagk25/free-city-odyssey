@@ -4,7 +4,7 @@ Owned by: ORCHESTRATOR agent (see AGENTS.md).
 
 ## Current phase
 
-**P4 — Interiors & Mini-games** (this commit)
+**P5+P6 — Story, Dialogue, Cutscenes, Endings + Full UX** (this commit)
 
 ## Gate history
 
@@ -14,22 +14,22 @@ Owned by: ORCHESTRATOR agent (see AGENTS.md).
 | P1 | engine core + tests | PASS | commit fbb31d3 |
 | P2 | 4-clock-times e2e; fps meter | PASS | commit d9560c8 |
 | P3 | doorway regression e2e | PASS | commit 4545010 |
-| P4 | e2e: enter cafe → pickup → terminal → leave; save round-trip | PENDING | awaiting CI |
+| P4 | interiors e2e; save round-trip | PASS | commit 4577f84 |
+| P5+P6 | intro cutscene e2e; quest advances at café; dialogue validator clean | PENDING | awaiting CI |
 
 ## Repo map (for agent context)
 
 - `src/engine/` — 7 modules ✅
-- `src/game/` — 10 sim modules + inventory ✅
-- `src/interiors/` — room runtime (pure) ✅
-- `src/minigames/` — logic cores (pure) + DOM runtime ✅
-- `src/render/` — 9 modules incl. interior-renderer ✅
-- `src/data/` — all content JSON (+furn, +rewards) ✅
-- `tests/` — 24 suites ✅
-- `e2e/` — boot, 4-clock-times, doorway regression, interiors ✅
+- `src/game/` — 15 sim modules ✅
+- `src/interiors/`, `src/minigames/` ✅
+- `src/ui/hud.ts` — full DOM HUD + minimap ✅
+- `src/render/` — 9 modules + vision/markers ✅
+- `src/data/` — all content JSON incl. cutscenes + dialogue trees ✅
+- `tests/` — 28 suites ✅
+- `e2e/` — boot, clock, doorway, interiors, story ✅
 
 ## Next
 
-P5 — story, dialogue, cutscenes: data-driven quest engine (main chain +
-ending choice), dialogue tree runtime (Maya/Zed/Ivy + generic citizen menu),
-cutscene engine (letterbox, typewriter, skip), seekers scripting, side quests
-with live tracker. Dialogue validator (no dead nodes).
+P7 — Mobile & PWA: safe-area polish, install prompt, offline service worker,
+haptics. Then P8 — QA hardening: performance pass, soak test, save migration
+matrix. Then P9 — Release: changelog, itch.io, v1.0.0 tag.

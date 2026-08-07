@@ -43,11 +43,16 @@ export interface RenderWorldState {
   playerDir: Facing;
   playerMoving: boolean;
   playerMovePhase: number;
+  playerGlow: boolean;
   npcs: RenderNpc[];
   cat: { x: number; y: number; moving: boolean } | null;
   robbery: { robber: { x: number; y: number }; cop: { x: number; y: number } } | null;
   mode: 'city' | 'interior';
   interior: RenderInterior | null;
+  visionOn: boolean;
+  fragments: number[];
+  questTarget: { x: number; y: number } | null;
+  photoSpots: { x: number; y: number }[];
 }
 
 /** Renderer abstraction — Canvas2D fallback can implement the same interface (see ROADMAP risk table). */

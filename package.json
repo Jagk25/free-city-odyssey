@@ -1,9 +1,9 @@
 {
   "name": "free-city-odyssey",
   "private": true,
-  "version": "0.5.0",
+  "version": "0.7.0",
   "type": "module",
-  "description": "Free City: Odyssey — living-city browser RPG. Modular rebuild (P4 interiors & mini-games).",
+  "description": "Free City: Odyssey — living-city browser RPG. Modular rebuild (P5 story + P6 UX).",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",

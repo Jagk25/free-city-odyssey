@@ -2,28 +2,41 @@ import type { IRenderer, RenderWorldState } from '../render/renderer';
 import type { Input } from '../engine/input';
 import { defaultSave, load, save, type SaveGame } from '../engine/save-system';
 import { advanceClock } from './world-clock';
-import { advanceWeather, initialWeather, type WeatherState } from './weather';
+import { advanceWeather, initialWeather, type WeatherState, WEATHER_KINDS } from './weather';
 import { mulberry32 } from '../engine/rng';
 import { createPlayer, updatePlayer, type Player } from './player';
 import { spawnNpcs, updateNpc, type Npc } from './npc';
 import { updateSeekers } from './seekers';
 import { createCat, updateCat, type Cat } from './cat';
 import { createRobberyState, updateRobbery, startRobbery, type RobberyState } from './events';
-import { createRoom, moveInRoom, nearPoint, roomBlocked, type FurnItem, type RoomState } from '../interiors/interior-runtime';
-import { addItem, canTrade, executeTrade, hasItem, type Trade } from './inventory';
+import { advanceMainQuest, mainQuestTarget, mainQuestTitle, sideStageLabel, sideIsDone } from './quests';
+import { createCutscene, type Slide } from './cutscenes';
+import { pickFragment, allCollected, FRAGMENTS } from './vision';
+import type { DialogueTree } from './dialogue';
+import { createRoom, moveInRoom, nearPoint, type FurnItem, type RoomState } from '../interiors/interior-runtime';
+import { addItem, canTrade, executeTrade, hasItem, removeItem, type Trade } from './inventory';
 import type { MinigameConfig } from '../minigames/runtime';
+import type { HudData } from '../ui/hud';
 import buildings from '../data/buildings.json';
 import interiors from '../data/interiors.json';
 import trades from '../data/items.json';
+import cutscenes from '../data/cutscenes.json';
+import dialogueTrees from '../data/dialogue-trees.json';
 import map from '../data/map.json';
 
 const AUTOSAVE_SECONDS = 15;
 const DOOR_RADIUS = 1.1;
+const NPC_RADIUS = 1.4;
+const PHOTO_SPOTS: readonly [number, number][] = [[1.5, 6.5], [26.5, 6.5], [13.5, 26.5]];
 
 export interface GameUi {
   notify(msg: string): void;
   sfx(id: 'door' | 'coin' | 'fail' | 'blip' | 'fragment' | 'level' | 'alert'): void;
   openMinigame(config: MinigameConfig, onSolved: () => void, onExit: () => void): void;
+  openDialogue(tree: DialogueTree, startId: string, onChoice: (fx: string | undefined) => void, onClose: () => void): void;
+  playCutscene(slides: Slide[], onDone: () => void): void;
+  setHud(data: HudData): void;
+  drawMinimap(questTarget: { x: number; y: number } | null): void;
 }
 
 interface InteriorDef {
@@ -63,7 +76,16 @@ const LINEUP = {
   ],
 };
 
-/** P4 world: city + interiors + mini-games + inventory + trading. */
+const QUEST_DESCS: Record<string, string> = {
+  routine: 'Visit the Café — someone needs help.',
+  glasses: 'Reach the Dev Office — a signal is calling.',
+  bank: 'Head to the Bank — something is wrong.',
+  garden: 'Investigate the Warehouse flicker.',
+  server: 'Enter the Warehouse, solve the core.',
+  done: 'Day One complete — the city is yours.',
+};
+
+/** P5+P6 world: full story, dialogue, cutscenes, endings, vision, side quests, HUD. */
 export class World {
   private state: SaveGame = defaultSave();
   private weather: WeatherState = initialWeather();
@@ -77,7 +99,9 @@ export class World {
 
   private mode: 'city' | 'interior' = 'city';
   private room: RoomState | null = null;
-  private minigameOpen = false;
+  private overlayOpen = false;
+  private visionOn = false;
+  private fragments: number[] = [];
 
   constructor(
     private readonly renderer: IRenderer,
@@ -86,10 +110,19 @@ export class World {
   ) {}
 
   init(): void {
-    this.state = load();
+    const had = load();
+    const isNew = had.day === 1 && had.minute === 480 && had.quest === 'routine' && !had.flags.metMaya;
+    this.state = had;
     this.player = createPlayer(this.state.player.x, this.state.player.y);
     this.npcs = spawnNpcs(this.rng);
     if (typeof this.state.flags.catHome === 'boolean') this.cat.home = this.state.flags.catHome as boolean;
+    if (Array.isArray(this.state.flags.fragments)) this.fragments = this.state.flags.fragments as number[];
+    if (isNew) {
+      this.overlayOpen = true;
+      this.ui.playCutscene(createCutscene(cutscenes.intro as Slide[]).slides, () => {
+        this.overlayOpen = false;
+      });
+    }
   }
 
   // ---- debug/e2e hooks ----
@@ -124,6 +157,10 @@ export class World {
     return Object.keys(this.state.inventory);
   }
 
+  getQuest(): string {
+    return this.state.quest;
+  }
+
   setRoomPos(x: number, y: number): void {
     if (this.room) {
       this.room.px = x;
@@ -136,6 +173,41 @@ export class World {
       this.mode = 'city';
       this.room = null;
     }
+  }
+
+  setWeather(kind: string): void {
+    if ((WEATHER_KINDS as readonly string[]).includes(kind)) {
+      this.weather = { kind: kind as WeatherState['kind'], timer: 40 };
+    }
+  }
+
+  addXp(n: number): void {
+    this.gainXp(n);
+  }
+
+  unlockVision(): void {
+    this.state.flags.vision = true;
+  }
+
+  giveAllItems(): void {
+    for (const def of interiors as InteriorDef[]) {
+      if (def.item) this.state.inventory = addItem(this.state.inventory, def.item.name);
+    }
+  }
+
+  replayIntro(): void {
+    this.overlayOpen = true;
+    this.ui.playCutscene(cutscenes.intro as Slide[], () => {
+      this.overlayOpen = false;
+    });
+  }
+
+  saveState(): SaveGame {
+    return this.state;
+  }
+
+  playerPos(): { x: number; y: number } {
+    return { x: this.player.x, y: this.player.y };
   }
 
   // ---- interiors ----
@@ -193,7 +265,54 @@ export class World {
     if (r.flag) this.state.flags[r.flag] = true;
     this.ui.sfx('coin');
     this.ui.notify(`${def.name} terminal solved!`);
+
+    if (def.id === 'dev' && this.state.quest === 'glasses') {
+      this.state.flags.vision = true;
+      this.state.quest = advanceMainQuest(this.state.quest);
+      this.playCine('vision');
+    } else if (def.id === 'bank' && this.state.quest === 'bank') {
+      this.state.quest = advanceMainQuest(this.state.quest);
+    } else if (def.id === 'warehouse' && this.state.quest === 'server') {
+      this.endingChoice();
+    }
     save(this.state);
+  }
+
+  private playCine(id: keyof typeof cutscenes, onDone?: () => void): void {
+    this.overlayOpen = true;
+    this.ui.playCutscene(cutscenes[id] as Slide[], () => {
+      this.overlayOpen = false;
+      onDone?.();
+    });
+  }
+
+  private endingChoice(): void {
+    this.overlayOpen = true;
+    const tree: DialogueTree = {
+      start: {
+        sp: 'THE CORE',
+        t: 'The loop trembles, waiting for your decision. This choice is permanent.',
+        c: [
+          { t: 'Preserve the Loop — keep Free City safe and familiar', fx: 'endPreserve' },
+          { t: 'Awaken the City — free every citizen from the loop', fx: 'endAwaken' },
+        ],
+      },
+    };
+    this.ui.openDialogue(
+      tree,
+      'start',
+      (fx) => {
+        if (fx === 'endPreserve' || fx === 'endAwaken') {
+          this.state.flags.ending = fx === 'endPreserve' ? 'preserve' : 'awaken';
+          this.state.quest = 'done';
+          if (fx === 'endAwaken') this.state.flags.boardAwakens = true;
+          this.playCine(fx);
+        }
+      },
+      () => {
+        this.overlayOpen = false;
+      },
+    );
   }
 
   private gainXp(n: number): void {
@@ -206,21 +325,99 @@ export class World {
     }
   }
 
-  private interact(): void {
-    if (this.minigameOpen) return;
+  private applyDialogueFx(fx: string | undefined): void {
+    if (!fx) return;
+    for (const part of fx.split('+')) {
+      if (part === 'metMaya') this.state.flags.metMaya = true;
+      else if (part === 'metZed') this.state.flags.metZed = true;
+      else if (part === 'rep') this.state.rep += 1;
+      else if (part === 'note') {
+        this.state.inventory = addItem(this.state.inventory, 'Strange Note');
+        this.ui.notify('Received: Strange Note');
+      } else if (part === 'ivyHint') this.gainXp(10);
+    }
+  }
 
-    if (this.mode === 'city') {
-      const b = buildings.find((bb) => Math.hypot(this.player.x - bb.door.x, this.player.y - bb.door.y) < DOOR_RADIUS);
-      if (b) this.enterInterior(b.id);
+  private openNpcDialogue(npc: Npc): void {
+    this.overlayOpen = true;
+    const seekerTree = (dialogueTrees as Record<string, DialogueTree>)[npc.def.seeker ?? ''];
+    if (npc.seeking && seekerTree) {
+      this.ui.openDialogue(seekerTree, 'start', (fx) => this.applyDialogueFx(fx), () => {
+        this.overlayOpen = false;
+      });
       return;
     }
+    const mood =
+      npc.needs.energy < 25
+        ? 'Honestly? Exhausted. The loop never lets me rest.'
+        : npc.needs.social < 25
+          ? 'A little lonely. Most days everyone just walks past.'
+          : 'Strangely good. Like something in the air is changing.';
+    const lore = [
+      'They say the northwest park used to be a real garden — wild, unscripted.',
+      'The Architect watches through the lamps. Or so the rumor goes.',
+      'The Dev Office knows more than they say. They always do.',
+      'Six fragments of the First World are hidden in the city. Nobody remembers why.',
+    ][Math.floor(this.rng() * 4)]!;
+    const tree: DialogueTree = {
+      start: {
+        sp: npc.def.name,
+        t: '"Oh — hello, Noa."',
+        c: [
+          { t: 'How are you feeling today?', next: 'mood' },
+          { t: 'What do you know about this city?', next: 'lore' },
+          { t: 'Just saying hi.', next: 'bye', fx: 'greet' },
+        ],
+      },
+      mood: { sp: npc.def.name, t: `"${mood}"`, c: [{ t: 'Hang in there.', next: 'bye' }] },
+      lore: { sp: npc.def.name, t: `"${lore}"`, c: [{ t: 'Interesting...', next: 'bye' }] },
+      bye: { sp: npc.def.name, t: '"See you around, Noa."' },
+    };
+    this.ui.openDialogue(
+      tree,
+      'start',
+      (fx) => {
+        if (fx === 'greet') npc.memory = Math.min(2, npc.memory + 0.3);
+      },
+      () => {
+        this.overlayOpen = false;
+      },
+    );
+  }
 
-    const room = this.room;
-    if (!room) return;
-    const def = this.interiorDef(room.id);
-    if (!def) return;
-
-    if (nearPoint(room, def.npc.x, def.npc.y, 1.2)) {
+  private applyInteriorFx(fx: string | undefined, def: InteriorDef): void {
+    if (!fx) return;
+    if (fx === 'questRoutine') {
+      this.state.rep += 2;
+      this.state.energy = Math.min(100, this.state.energy + 15);
+      this.state.quest = advanceMainQuest(this.state.quest);
+      this.gainXp(30);
+      this.ui.notify('You stepped off the script for the first time.');
+    } else if (fx === 'coffee') {
+      this.state.energy = Math.min(100, this.state.energy + 10);
+      this.ui.sfx('coin');
+    } else if (fx === 'takeLens') {
+      this.state.flags.vision = true;
+      this.state.quest = advanceMainQuest(this.state.quest);
+      this.gainXp(35);
+      this.playCine('vision');
+    } else if (fx === 'startCat') {
+      this.state.side.cat = 1;
+      this.ui.notify('Side quest started: find the lost cat.');
+    } else if (fx === 'startPack') {
+      this.state.side.pack = 1;
+      this.state.inventory = addItem(this.state.inventory, 'Sealed Package');
+      this.ui.notify('Side quest started: deliver the package.');
+    } else if (fx === 'deliverPack') {
+      this.state.inventory = removeItem(this.state.inventory, 'Sealed Package');
+      this.state.side.pack = 2;
+      this.state.cash += 10;
+      this.gainXp(25);
+      this.ui.sfx('coin');
+    } else if (fx === 'startPhoto') {
+      this.state.side.photo = 1;
+      this.ui.notify('Side quest started: find 3 glowing photo spots.');
+    } else if (fx.startsWith('trade:')) {
       const trade = (trades as Trade[]).find((t) => t.location === def.id);
       if (trade && canTrade(this.state.inventory, trade)) {
         this.state.inventory = executeTrade(this.state.inventory, trade);
@@ -232,10 +429,54 @@ export class World {
         if (e.flag) this.state.flags[e.flag] = true;
         this.ui.sfx('coin');
         this.ui.notify(`Traded ${trade.want} for ${trade.give}!`);
-        save(this.state);
-      } else {
-        this.ui.notify(`${def.npc.name}: "The terminal runs a challenge — solve it for a reward."`);
       }
+    }
+  }
+
+  private interact(): void {
+    if (this.overlayOpen) return;
+
+    if (this.mode === 'city') {
+      if (
+        this.state.side.cat === 1 &&
+        !this.cat.following &&
+        !this.cat.home &&
+        Math.hypot(this.player.x - this.cat.x, this.player.y - this.cat.y) < 1.2
+      ) {
+        this.cat.following = true;
+        this.state.side.cat = 2;
+        this.ui.notify('The cat is following you — lead her back to the Old Inn.');
+        this.ui.sfx('fragment');
+        return;
+      }
+
+      const npc = this.npcs.find((n) => Math.hypot(this.player.x - n.x, this.player.y - n.y) < NPC_RADIUS);
+      const b = buildings.find((bb) => Math.hypot(this.player.x - bb.door.x, this.player.y - bb.door.y) < DOOR_RADIUS);
+      if (npc && (!b || Math.hypot(this.player.x - npc.x, this.player.y - npc.y) < Math.hypot(this.player.x - b.door.x, this.player.y - b.door.y))) {
+        this.openNpcDialogue(npc);
+        return;
+      }
+
+      if (b) {
+        if (b.id === 'warehouse' && this.state.quest === 'garden') {
+          this.state.quest = advanceMainQuest(this.state.quest);
+          this.gainXp(40);
+          this.ui.sfx('alert');
+          this.playCine('storm');
+          return;
+        }
+        this.enterInterior(b.id);
+      }
+      return;
+    }
+
+    const room = this.room;
+    if (!room) return;
+    const def = this.interiorDef(room.id);
+    if (!def) return;
+
+    if (nearPoint(room, def.npc.x, def.npc.y, 1.2)) {
+      this.interiorNpcDialogueWithFx(def);
       return;
     }
 
@@ -252,15 +493,15 @@ export class World {
         this.ui.notify('This terminal has already been resolved.');
         return;
       }
-      this.minigameOpen = true;
+      this.overlayOpen = true;
       this.ui.openMinigame(
         this.minigameConfig(def),
         () => {
-          this.minigameOpen = false;
+          this.overlayOpen = false;
           this.solveTerminal(def);
         },
         () => {
-          this.minigameOpen = false;
+          this.overlayOpen = false;
         },
       );
       return;
@@ -269,15 +510,150 @@ export class World {
     this.ui.notify('Move closer to the terminal, NPC, or item.');
   }
 
+  private interiorNpcDialogueWithFx(def: InteriorDef): void {
+    this.overlayOpen = true;
+    const quest = this.state.quest;
+    const side = this.state.side;
+
+    let tree: DialogueTree;
+    if (def.id === 'cafe' && quest === 'routine') {
+      tree = {
+        start: {
+          sp: 'BARISTA',
+          t: '"You look like you need more than coffee today. Someone outside was asking for help — maybe break your routine?"',
+          c: [
+            { t: "I'll go help them (+2 rep)", fx: 'questRoutine' },
+            { t: 'Just coffee, thanks (+10 energy)', fx: 'coffee' },
+          ],
+        },
+      };
+    } else if (def.id === 'dev' && quest === 'glasses') {
+      tree = {
+        start: {
+          sp: 'DEV-AVATAR',
+          t: '"The city has layers you haven\'t seen. Take this lens — it reveals what\'s hidden."',
+          c: [{ t: 'Take the Glitch Lens', fx: 'takeLens' }],
+        },
+      };
+    } else if (def.id === 'inn' && side.cat === 0) {
+      tree = {
+        start: {
+          sp: 'INNKEEPER',
+          t: '"My cat ran off into the city! If you find her, she\'ll follow you back. Please!"',
+          c: [
+            { t: "I'll find her (start quest)", fx: 'startCat' },
+            { t: 'Sorry, busy', fx: undefined },
+          ],
+        },
+      };
+    } else if (def.id === 'shop' && side.pack === 0) {
+      tree = {
+        start: {
+          sp: 'SHOPKEEPER',
+          t: '"I have a package that needs to reach the Dev Office. Five minutes of your time, ten of my dollars."',
+          c: [
+            { t: 'Deliver it (start quest)', fx: 'startPack' },
+            { t: 'Not now', fx: undefined },
+          ],
+        },
+      };
+    } else if (def.id === 'dev' && side.pack === 1 && hasItem(this.state.inventory, 'Sealed Package')) {
+      tree = {
+        start: {
+          sp: 'DEV-AVATAR',
+          t: '"Ah, my parts! Right on time."',
+          c: [{ t: 'Hand over the package (+$10, +25 XP)', fx: 'deliverPack' }],
+        },
+      };
+    } else if (def.id === 'market' && side.photo === 0) {
+      tree = {
+        start: {
+          sp: 'VENDOR',
+          t: '"Three spots in this city glow golden at the right angle. Stand in each and I\'ll pay for the memories."',
+          c: [
+            { t: "I'll find them (start quest)", fx: 'startPhoto' },
+            { t: 'Maybe later', fx: undefined },
+          ],
+        },
+      };
+    } else {
+      const trade = (trades as Trade[]).find((t) => t.location === def.id);
+      if (trade && canTrade(this.state.inventory, trade)) {
+        tree = {
+          start: {
+            sp: def.npc.name,
+            t: `"You have something I need. Trade your ${trade.want} for my ${trade.give}?"`,
+            c: [
+              { t: 'Trade', fx: `trade:${def.id}` },
+              { t: 'Not now', fx: undefined },
+            ],
+          },
+        };
+      } else {
+        tree = {
+          start: {
+            sp: def.npc.name,
+            t: '"Welcome. The terminal over there runs a challenge — solve it and there\'s a reward in it for you."',
+          },
+        };
+      }
+    }
+
+    this.ui.openDialogue(tree, 'start', (fx) => this.applyInteriorFx(fx, def), () => {
+      this.overlayOpen = false;
+    });
+  }
+
+  private district(): string {
+    const x = this.player.x;
+    const y = this.player.y;
+    return y < 9.33 ? (x < 9.33 ? 'Downtown' : x < 18.66 ? 'Midtown' : 'Civic Heights') : x < 9.33 ? 'Old Quarter' : x < 18.66 ? 'Market Row' : 'Harbor';
+  }
+
+  private promptText(): string {
+    if (this.overlayOpen) return '';
+    if (this.mode === 'interior' && this.room) {
+      const def = this.interiorDef(this.room.id);
+      if (!def) return '';
+      if (nearPoint(this.room, def.npc.x, def.npc.y, 1.2)) return `Talk to ${def.npc.name}`;
+      if (def.item && !hasItem(this.state.inventory, def.item.name) && nearPoint(this.room, def.item.x, def.item.y, 1.2)) return `Pick up ${def.item.name}`;
+      if (nearPoint(this.room, def.terminal[0] + 0.5, def.terminal[1] + 0.5, 1.3)) {
+        return this.state.solvedTerminals.includes(def.id) ? 'Terminal (solved)' : 'Use the terminal';
+      }
+      return '';
+    }
+    if (this.state.side.cat === 1 && !this.cat.following && !this.cat.home && Math.hypot(this.player.x - this.cat.x, this.player.y - this.cat.y) < 1.2) {
+      return 'Pick up the cat';
+    }
+    const b = buildings.find((bb) => Math.hypot(this.player.x - bb.door.x, this.player.y - bb.door.y) < DOOR_RADIUS);
+    const npc = this.npcs.find((n) => Math.hypot(this.player.x - n.x, this.player.y - n.y) < NPC_RADIUS);
+    if (b && npc) {
+      const db = Math.hypot(this.player.x - b.door.x, this.player.y - b.door.y);
+      const dn = Math.hypot(this.player.x - npc.x, this.player.y - npc.y);
+      return db <= dn ? `Enter ${b.name}` : `Talk to ${npc.def.name}`;
+    }
+    if (b) return `Enter ${b.name}`;
+    if (npc) return `Talk to ${npc.def.name}`;
+    return '';
+  }
+
   update(dt: number): void {
     this.input.pollGamepad();
     const axis = this.input.axis();
 
+    if (this.input.wasPressed('vision') && this.state.flags.vision) {
+      this.visionOn = !this.visionOn;
+      this.ui.notify(this.visionOn ? 'Glitch Vision engaged.' : 'Vision disengaged.');
+    }
+
+    if (this.overlayOpen) {
+      this.input.endFrame();
+      return;
+    }
+
     if (this.mode === 'interior' && this.room) {
       const def = this.interiorDef(this.room.id);
-      if (def && !this.minigameOpen) {
-        moveInRoom(this.room, this.roomFurn(def), axis, dt);
-      }
+      if (def) moveInRoom(this.room, this.roomFurn(def), axis, dt);
       if (this.input.wasPressed('interact')) this.interact();
       this.input.endFrame();
       return;
@@ -297,12 +673,64 @@ export class World {
     }
     updateSeekers(this.npcs, this.player, this.state.flags, this.state.side, dt);
 
-    updateCat(this.cat, dt, this.player, this.rng, map.width, map.height);
+    const catResult = updateCat(this.cat, dt, this.player, this.rng, map.width, map.height);
+    if (catResult === 'home') {
+      this.state.side.cat = 3;
+      this.state.rep += 3;
+      this.gainXp(60);
+      this.ui.notify('You returned the lost cat to the Inn! +3 rep');
+      this.ui.sfx('coin');
+    }
     this.state.flags.catHome = this.cat.home;
 
     const rob = updateRobbery(this.robbery, dt, this.player);
     this.robbery = rob.state;
-    if (rob.arrested) this.state.rep += 2;
+    if (rob.arrested) {
+      this.state.rep += 2;
+      this.gainXp(25);
+      this.ui.notify('The cop caught the robber. +2 rep');
+      this.ui.sfx('coin');
+    }
+    if (rob.started) {
+      this.ui.notify('ALERT: A robbery just broke out at the Bank!');
+      this.ui.sfx('alert');
+    }
+
+    if (this.visionOn) {
+      const picked = pickFragment(this.fragments, this.player.x, this.player.y);
+      if (picked !== null) {
+        this.fragments.push(picked);
+        this.state.flags.fragments = [...this.fragments];
+        this.gainXp(20);
+        this.ui.sfx('fragment');
+        this.ui.notify(`Fragment recovered (${this.fragments.length}/${FRAGMENTS.length})`);
+        if (allCollected(this.fragments)) {
+          this.state.flags.boardAwakens = true;
+          this.gainXp(120);
+          this.ui.notify('All fragments found — The Board Awakens.');
+        }
+      }
+    }
+
+    if (this.state.side.photo === 1) {
+      PHOTO_SPOTS.forEach(([sx, sy], i) => {
+        const key = `photoSpot${i}`;
+        if (this.state.flags[key]) return;
+        if (Math.hypot(this.player.x - sx, this.player.y - sy) < 0.8) {
+          this.state.flags[key] = true;
+          this.state.side.photoSpots += 1;
+          this.gainXp(20);
+          this.ui.sfx('fragment');
+          this.ui.notify(`Photo captured (${this.state.side.photoSpots}/3)`);
+          if (this.state.side.photoSpots >= 3) {
+            this.state.side.photo = 2;
+            this.state.cash += 30;
+            this.gainXp(40);
+            this.ui.notify('Photo Tour complete! +$30');
+          }
+        }
+      });
+    }
 
     const clock = advanceClock({ day: this.state.day, minute: this.state.minute }, dt);
     this.state.day = clock.day;
@@ -318,6 +746,9 @@ export class World {
   }
 
   render(_alpha: number): void {
+    const questTargetId = mainQuestTarget(this.state.quest);
+    const questBuilding = questTargetId ? buildings.find((b) => b.id === questTargetId) : null;
+
     const renderState: RenderWorldState = {
       minute: this.state.minute,
       weather: this.weather.kind,
@@ -326,6 +757,7 @@ export class World {
       playerDir: this.player.dir,
       playerMoving: this.player.moving,
       playerMovePhase: this.player.movePhase,
+      playerGlow: Boolean(this.state.flags.boardAwakens),
       npcs: this.npcs.map((n) => ({
         id: n.def.id,
         name: n.def.name,
@@ -345,10 +777,39 @@ export class World {
       robbery: this.robbery.active ? { robber: this.robbery.robber!, cop: this.robbery.cop! } : null,
       mode: this.mode,
       interior: this.buildInteriorRender(),
+      visionOn: this.visionOn,
+      fragments: [...this.fragments],
+      questTarget: questBuilding ? { x: questBuilding.x + questBuilding.w / 2, y: questBuilding.y + questBuilding.d / 2 } : null,
+      photoSpots: this.state.side.photo === 1 ? PHOTO_SPOTS.filter((_, i) => !this.state.flags[`photoSpot${i}`]).map(([x, y]) => ({ x, y })) : [],
     };
     this.renderer.setWorldState(renderState);
     this.renderer.begin();
     this.renderer.end();
+
+    const hud: HudData = {
+      day: this.state.day,
+      minute: this.state.minute,
+      energy: this.state.energy,
+      cash: this.state.cash,
+      rep: this.state.rep,
+      district: this.district(),
+      weather: this.weather.kind === 'clear' ? 'Clear skies' : this.weather.kind === 'rain' ? 'Neon rain' : 'Fog bank',
+      level: this.state.level,
+      xp: this.state.xp,
+      xpNext: this.state.level * 100,
+      fragments: this.fragments.length,
+      fragmentsTotal: FRAGMENTS.length,
+      questTitle: mainQuestTitle(this.state.quest),
+      questDesc: QUEST_DESCS[this.state.quest] ?? '',
+      sides: (['cat', 'pack', 'photo'] as const).map((id) => ({
+        label: sideStageLabel(id, this.state.side[id], this.state.side.photoSpots),
+        done: sideIsDone(id, this.state.side[id]),
+      })),
+      inventory: Object.keys(this.state.inventory),
+      prompt: this.promptText(),
+    };
+    this.ui.setHud(hud);
+    this.ui.drawMinimap(questBuilding ? { x: questBuilding.x + questBuilding.w / 2, y: questBuilding.y + questBuilding.d / 2 } : null);
   }
 
   private buildInteriorRender(): RenderWorldState['interior'] {

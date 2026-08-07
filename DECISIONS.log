@@ -1,22 +1,20 @@
 # DECISIONS.log — append-only ADRs
 
-## ADR-0001 … ADR-0009
+## ADR-0001 … ADR-0011
 See earlier entries: PixiJS renderer, fixed 60Hz sim, JSON content, door mats,
 gesture-gated audio, pure engine modules, renderer-owned ambience, A* grid
-pathfinding, seekers sharing the pathfinder.
+pathfinding, seekers sharing the pathfinder, pure mini-game cores, top-down
+interiors.
 
-## ADR-0010: Mini-game rules as pure cores, DOM as a replaceable host — 2026-08-08
-Context: prototype mixed game rules with DOM code, making them untestable.
-Decision: all 9 mini-games have pure logic cores in `minigames/logic.ts`
-(mastermind scoring, haggle state machine, etc.); `runtime.ts` is a thin DOM
-host that could be swapped for a Pixi-native UI later.
-Consequences: every game is unit-tested in node; UI reskinning never touches
-rules.
+## ADR-0012: Story content as validated data — 2026-08-08
+Context: prototype dialogue/cutscenes were inline strings with no way to
+check for dead branches. Decision: cutscenes.json + dialogue-trees.json hold
+all story content; a validator (tests/dialogue.test.ts) proves no choice
+points to a missing node.
+Consequences: writers edit JSON; CI fails on dead dialogue nodes.
 
-## ADR-0011: Interiors are a separate top-down scene, not iso — 2026-08-08
-Context: rooms in the prototype used a simple top-down grid while the city is
-isometric. Decision: keep interiors top-down (8×5) with their own runtime and
-renderer; the world switches modes (city | interior) rather than faking
-interiors inside the iso map.
-Consequences: simpler furniture collision, clearer readability, and the two
-renderers never fight over the camera.
+## ADR-0013: Overlays pause the sim through one flag — 2026-08-08
+Context: dialogue, cutscenes, mini-games, and pause all need to freeze the
+world without fighting each other. Decision: a single overlayOpen flag in
+World; any overlay sets it, sim early-returns while true.
+Consequences: no double-pause bugs; one place to reason about sim freezing.
