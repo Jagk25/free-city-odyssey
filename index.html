@@ -7,13 +7,33 @@
     <link rel="manifest" href="/manifest.webmanifest" />
     <title>Free City: Odyssey</title>
     <style>
-      html, body { margin: 0; height: 100%; background: #0a1629; overflow: hidden; }
+      html, body { margin: 0; height: 100%; background: #0a1629; overflow: hidden; font-family: monospace; }
       canvas { display: block; }
-      #boot { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; color: #5cffa0; font: 14px monospace; background: #0a1629; letter-spacing: 2px; }
+      #boot { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; color: #5cffa0; font-size: 14px; background: #0a1629; letter-spacing: 2px; z-index: 10; }
+      #touch { position: fixed; display: flex; justify-content: space-between; left: 14px; right: 14px; bottom: max(14px, env(safe-area-inset-bottom)); pointer-events: none; z-index: 5; }
+      .pad { display: grid; grid-template: repeat(3, 52px) / repeat(3, 52px); gap: 4px; pointer-events: auto; }
+      .pad button, #act, #music { color: #fff; background: #102b49e6; border: 1px solid #8ddcff88; border-radius: 14px; font: bold 18px monospace; touch-action: none; }
+      .pad button[data-action="up"] { grid-column: 2; }
+      .pad button[data-action="left"] { grid-column: 1; grid-row: 2; }
+      .pad button[data-action="right"] { grid-column: 3; grid-row: 2; }
+      .pad button[data-action="down"] { grid-column: 2; grid-row: 3; }
+      #act { align-self: center; width: 72px; height: 72px; border-radius: 50%; color: #ffdf70; font-size: 14px; pointer-events: auto; }
+      #music { position: fixed; right: 12px; bottom: 100px; padding: 6px 10px; font-size: 11px; color: #ffdf70; pointer-events: auto; }
+      @media (min-width: 820px) { #touch { opacity: 0.55; transform: scale(0.85); transform-origin: bottom left; } }
     </style>
   </head>
   <body>
     <div id="boot">FREE CITY: ODYSSEY — loading…</div>
+    <div id="touch">
+      <div class="pad">
+        <button data-action="up">▲</button>
+        <button data-action="left">◀</button>
+        <button data-action="right">▶</button>
+        <button data-action="down">▼</button>
+      </div>
+      <button id="act" data-action="interact">E<br /><small>ACT</small></button>
+    </div>
+    <button id="music">♫ MUSIC</button>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

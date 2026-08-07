@@ -1,0 +1,15 @@
+{
+  "width": 28,
+  "height": 28,
+  "tileW": 72,
+  "tileH": 36,
+  "playerSpawn": { "x": 5.25, "y": 5.25 },
+  "districts": [
+    { "name": "Downtown", "x0": 0, "y0": 0, "x1": 9.33, "y1": 9.33 },
+    { "name": "Midtown", "x0": 9.33, "y0": 0, "x1": 18.66, "y1": 9.33 },
+    { "name": "Civic Heights", "x0": 18.66, "y0": 0, "x1": 28, "y1": 9.33 },
+    { "name": "Old Quarter", "x0": 0, "y0": 9.33, "x1": 9.33, "y1": 28 },
+    { "name": "Market Row", "x0": 9.33, "y0": 9.33, "x1": 18.66, "y1": 28 },
+    { "name": "Harbor", "x0": 18.66, "y0": 9.33, "x1": 28, "y1": 28 }
+  ]
+}

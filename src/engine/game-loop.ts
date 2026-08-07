@@ -26,10 +26,8 @@ export class GameLoop {
     this.running = false;
   }
 
-  private frame = (now: number): void => {
-    if (!this.running) return;
-    let delta = (now - this.last) / 1000;
-    this.last = now;
+  /** Advances the fixed-step simulation. Separated from rAF so tests can drive it directly. */
+  tick(delta: number): number {
     if (delta > MAX_FRAME_DELTA) delta = MAX_FRAME_DELTA;
     this.acc += delta;
 
@@ -41,7 +39,15 @@ export class GameLoop {
     }
     if (steps === MAX_STEPS) this.acc = 0; // drop backlog after long tab-out
 
-    this.cb.render(this.acc / STEP);
+    return this.acc / STEP;
+  }
+
+  private frame = (now: number): void => {
+    if (!this.running) return;
+    const delta = (now - this.last) / 1000;
+    this.last = now;
+    const alpha = this.tick(delta);
+    this.cb.render(alpha);
     requestAnimationFrame(this.frame);
   };
 }

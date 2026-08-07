@@ -23,3 +23,18 @@ Decision: every building in buildings.json carries an explicit `door` point;
 AI may only target door mats, never building centers.
 Consequences: doorway-block bug class eliminated by construction; e2e gate
 walks all 14 doors.
+
+## ADR-0005: Gesture-gated procedural audio bus — 2026-08-07
+Context: browsers suspend AudioContext until a user gesture; the prototype
+proved a zero-asset procedural score works well.
+Decision: AudioBus unlocks on first pointer/key gesture; SFX + music are pure
+schedule data (unit-tested); Howler reserved for composed tracks via dynamic
+import so node tests never touch the DOM.
+Consequences: no audio assets needed at launch; autoplay-safe; testable.
+
+## ADR-0006: Engine modules as pure logic where feasible — 2026-08-07
+Context: prototype engine code was untestable (DOM-coupled throughout).
+Decision: camera, rng, save, loop tick, and audio schedules are pure
+TypeScript with injectable dependencies (e.g. gamepad source).
+Consequences: 8 unit suites run in node in milliseconds; CI catches
+regressions before any browser test runs.
