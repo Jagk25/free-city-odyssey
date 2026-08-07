@@ -18,6 +18,22 @@ export interface RenderNpc {
   memory: number;
 }
 
+export interface RenderInterior {
+  id: string;
+  name: string;
+  color: string;
+  px: number;
+  py: number;
+  dir: Facing;
+  moving: boolean;
+  movePhase: number;
+  furn: { type: string; x: number; y: number; w: number; h: number; blocking: boolean }[];
+  npc: { name: string; x: number; y: number };
+  item: { name: string; x: number; y: number } | null;
+  terminal: { x: number; y: number };
+  solved: boolean;
+}
+
 /** Sim → render contract. Presentation-only systems (cars, particles, sky) never appear here. */
 export interface RenderWorldState {
   minute: number;
@@ -30,6 +46,8 @@ export interface RenderWorldState {
   npcs: RenderNpc[];
   cat: { x: number; y: number; moving: boolean } | null;
   robbery: { robber: { x: number; y: number }; cop: { x: number; y: number } } | null;
+  mode: 'city' | 'interior';
+  interior: RenderInterior | null;
 }
 
 /** Renderer abstraction — Canvas2D fallback can implement the same interface (see ROADMAP risk table). */

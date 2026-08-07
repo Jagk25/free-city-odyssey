@@ -8,6 +8,7 @@ import { drawCityAnimated, drawCityBase, getEmitters, type EmitterPoint } from '
 import { ParticleSystem } from './particles';
 import { advanceCar, spawnCars, type Car } from './traffic';
 import { EntityRenderer } from './entities';
+import { InteriorRenderer } from './interior-renderer';
 import { mulberry32 } from '../engine/rng';
 import buildings from '../data/buildings.json';
 import props from '../data/props.json';
@@ -19,7 +20,7 @@ interface RainDrop {
   z: number;
 }
 
-/** P3 renderer: full living city + animated characters. */
+/** P4 renderer: living city + characters + interiors. */
 export class PixiRenderer implements IRenderer {
   private app = new Application();
   private skyGfx = new Graphics();
@@ -31,6 +32,7 @@ export class PixiRenderer implements IRenderer {
   private weatherGfx = new Graphics();
   private nightGfx = new Graphics();
   private readonly entities = new EntityRenderer();
+  private readonly interior = new InteriorRenderer();
   private fpsText: Text | null = null;
 
   private readonly camera = new Camera(() => ({ w: this.width, h: this.height }), {
@@ -79,10 +81,13 @@ export class PixiRenderer implements IRenderer {
     this.worldLayer.addChild(this.entities.container);
     for (const label of labels) this.worldLayer.addChild(label);
 
+    this.interior.container.visible = false;
+
     this.app.stage.addChild(this.skyGfx);
     this.app.stage.addChild(this.worldLayer);
     this.app.stage.addChild(this.weatherGfx);
     this.app.stage.addChild(this.nightGfx);
+    this.app.stage.addChild(this.interior.container);
 
     if (typeof location !== 'undefined' && location.search.includes('fps=1')) {
       this.fpsText = new Text({ text: 'FPS: --', style: { fill: 0x8fe7a5, fontFamily: 'monospace', fontSize: 12 } });
@@ -104,6 +109,19 @@ export class PixiRenderer implements IRenderer {
     this.lastFrame = now;
     this.timeMs += dtMs;
     const dt = dtMs / 1000;
+
+    const inInterior = this.state.mode === 'interior' && this.state.interior;
+    this.worldLayer.visible = !inInterior;
+    this.skyGfx.visible = !inInterior;
+    this.weatherGfx.visible = !inInterior;
+    this.nightGfx.visible = !inInterior;
+    this.interior.container.visible = Boolean(inInterior);
+
+    if (inInterior) {
+      this.interior.draw(this.state.interior!, this.timeMs, this.width, this.height);
+      this.tickFps(dtMs);
+      return;
+    }
 
     drawSky(this.skyGfx, { minute: this.state.minute, timeMs: this.timeMs, width: this.width, height: this.height, dtMs }, this.skyEntities);
 
@@ -135,14 +153,17 @@ export class PixiRenderer implements IRenderer {
       this.nightGfx.rect(0, 0, this.width, this.height).fill({ color: 0x060a1c, alpha: (1 - day) * 0.55 });
     }
 
-    if (this.fpsText) {
-      this.fpsFrames += 1;
-      this.fpsTime += dtMs;
-      if (this.fpsTime >= 500) {
-        this.fpsText.text = `FPS: ${Math.round((this.fpsFrames * 1000) / this.fpsTime)}`;
-        this.fpsFrames = 0;
-        this.fpsTime = 0;
-      }
+    this.tickFps(dtMs);
+  }
+
+  private tickFps(dtMs: number): void {
+    if (!this.fpsText) return;
+    this.fpsFrames += 1;
+    this.fpsTime += dtMs;
+    if (this.fpsTime >= 500) {
+      this.fpsText.text = `FPS: ${Math.round((this.fpsFrames * 1000) / this.fpsTime)}`;
+      this.fpsFrames = 0;
+      this.fpsTime = 0;
     }
   }
 

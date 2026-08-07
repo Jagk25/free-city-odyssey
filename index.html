@@ -12,13 +12,37 @@
       #boot { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; color: #5cffa0; font-size: 14px; background: #0a1629; letter-spacing: 2px; z-index: 10; }
       #touch { position: fixed; display: flex; justify-content: space-between; left: 14px; right: 14px; bottom: max(14px, env(safe-area-inset-bottom)); pointer-events: none; z-index: 5; }
       .pad { display: grid; grid-template: repeat(3, 52px) / repeat(3, 52px); gap: 4px; pointer-events: auto; }
-      .pad button, #act, #music { color: #fff; background: #102b49e6; border: 1px solid #8ddcff88; border-radius: 14px; font: bold 18px monospace; touch-action: none; }
+      .pad button, #act, #music, #leave { color: #fff; background: #102b49e6; border: 1px solid #8ddcff88; border-radius: 14px; font: bold 18px monospace; touch-action: none; }
       .pad button[data-action="up"] { grid-column: 2; }
       .pad button[data-action="left"] { grid-column: 1; grid-row: 2; }
       .pad button[data-action="right"] { grid-column: 3; grid-row: 2; }
       .pad button[data-action="down"] { grid-column: 2; grid-row: 3; }
       #act { align-self: center; width: 72px; height: 72px; border-radius: 50%; color: #ffdf70; font-size: 14px; pointer-events: auto; }
       #music { position: fixed; right: 12px; bottom: 100px; padding: 6px 10px; font-size: 11px; color: #ffdf70; pointer-events: auto; }
+      #leave { position: fixed; left: 12px; bottom: 100px; padding: 8px 12px; font-size: 11px; color: #ffdf70; z-index: 16; }
+      .hidden { display: none !important; }
+      #feed { position: fixed; left: 12px; bottom: 150px; z-index: 5; display: flex; flex-direction: column; gap: 4px; pointer-events: none; }
+      .feedmsg { background: #0a1629d0; border-left: 3px solid #ffdf70; color: #eaf6ff; font: 10px monospace; padding: 5px 9px; border-radius: 0 7px 7px 0; opacity: 0.95; transition: opacity 0.6s; }
+      #mg { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: #000a; z-index: 20; padding: 16px; }
+      #mg-box { width: min(540px, 100%); background: #0e1c34; border: 1px solid #ffffff2a; border-radius: 14px; padding: 18px; color: #e6f0ff; max-height: 88vh; overflow: auto; }
+      #mg-title { margin: 0 0 8px; color: #ffdc68; font-size: 16px; }
+      #mg-desc { line-height: 1.55; font-size: 13px; color: #cfe0f5; white-space: pre-wrap; }
+      #mg-actions { display: grid; gap: 7px; margin-top: 12px; }
+      #mg-actions button { font: 12px monospace; text-align: left; padding: 9px 11px; background: #1c3459; border: 1px solid #ffffff26; border-radius: 8px; color: #fff; }
+      .mg-pads { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+      .mg-pads button { height: 52px; border-radius: 10px; border: 1px solid #fff2; }
+      .mg-dials { display: flex; gap: 14px; justify-content: center; margin: 14px 0; }
+      .mg-dials > div { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+      .mg-dials b { font-size: 18px; color: #ffdf70; }
+      .mg-dials button { width: 34px; height: 28px; border-radius: 6px; border: 1px solid #fff3; background: #1c3459; color: #fff; }
+      .mg-wires { display: flex; justify-content: space-between; gap: 30px; margin: 12px 0; }
+      .mg-wires button { width: 46px; height: 34px; border-radius: 8px; border: 2px solid #fff3; margin-bottom: 8px; display: block; }
+      .mg-wires button.sel { border-color: #fff; box-shadow: 0 0 8px #fff; }
+      .mg-wires button.done { opacity: 0.3; pointer-events: none; }
+      .mg-track { position: relative; height: 26px; background: #1c2c40; border-radius: 8px; overflow: hidden; margin: 10px 0; }
+      .mg-zone { position: absolute; top: 0; bottom: 0; background: #3dffa066; }
+      .mg-mark { position: absolute; top: 0; bottom: 0; width: 6px; background: #ffdf70; }
+      .mg-log { margin-top: 8px; font-size: 11px; color: #9fc9e8; line-height: 1.7; }
       @media (min-width: 820px) { #touch { opacity: 0.55; transform: scale(0.85); transform-origin: bottom left; } }
     </style>
   </head>
@@ -34,6 +58,16 @@
       <button id="act" data-action="interact">E<br /><small>ACT</small></button>
     </div>
     <button id="music">♫ MUSIC</button>
+    <button id="leave" class="hidden">◀ LEAVE</button>
+    <div id="feed"></div>
+    <div id="mg" class="hidden">
+      <div id="mg-box">
+        <h2 id="mg-title"></h2>
+        <p id="mg-desc"></p>
+        <div id="mg-body"></div>
+        <div id="mg-actions"></div>
+      </div>
+    </div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

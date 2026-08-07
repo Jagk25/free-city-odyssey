@@ -1,38 +1,22 @@
 # DECISIONS.log — append-only ADRs
 
-## ADR-0001: PixiJS (WebGL) over raw Canvas2D — 2026-08-07
-See commit history. PixiJS v8 behind IRenderer; Canvas2D fallback possible.
+## ADR-0001 … ADR-0009
+See earlier entries: PixiJS renderer, fixed 60Hz sim, JSON content, door mats,
+gesture-gated audio, pure engine modules, renderer-owned ambience, A* grid
+pathfinding, seekers sharing the pathfinder.
 
-## ADR-0002: Fixed 60Hz simulation, interpolated render — 2026-08-07
-Accumulator loop, max 5 steps, backlog dropped after 250ms.
+## ADR-0010: Mini-game rules as pure cores, DOM as a replaceable host — 2026-08-08
+Context: prototype mixed game rules with DOM code, making them untestable.
+Decision: all 9 mini-games have pure logic cores in `minigames/logic.ts`
+(mastermind scoring, haggle state machine, etc.); `runtime.ts` is a thin DOM
+host that could be swapped for a Pixi-native UI later.
+Consequences: every game is unit-tested in node; UI reskinning never touches
+rules.
 
-## ADR-0003: All content in JSON — 2026-08-07
-`src/data/*.json` is the single source of truth for content.
-
-## ADR-0004: Door mats as first-class data — 2026-08-07
-Every building carries an explicit `door` point; AI may only target door mats.
-
-## ADR-0005: Gesture-gated procedural audio bus — 2026-08-07
-AudioBus unlocks on first gesture; SFX/music are pure schedule data.
-
-## ADR-0006: Engine modules as pure logic where feasible — 2026-08-07
-Camera, rng, save, loop tick, audio schedules are node-testable.
-
-## ADR-0007: Visual ambience is renderer-owned — 2026-08-07
-Cars, particles, sky entities advance with render dt, never touch sim state.
-
-## ADR-0008: A* over a walkable cell grid, not steering — 2026-08-07
-Context: prototype NPCs steered directly and jammed on buildings, needing
-stuck-hacks. Decision: 0.5-cell walkable grid derived from building data,
-A* for all NPC/seeker paths, plus a data-level gate (`doorMatWalkable`)
-asserting every door is reachable. Stuck detection remains as a safety net.
-Consequences: path validity provable in unit tests; doorway regression e2e
-covers all 14 doors.
-
-## ADR-0009: Seekers share the NPC pathfinder — 2026-08-07
-Context: seekers in the prototype steered directly at the player and clipped
-buildings. Decision: seekers repath via the same A* every 2s toward the
-player's cell, falling back to collision-safe steering only when the player
-stands on an unreachable cell.
-Consequences: seekers arrive through doors like citizens; no new pathing
-code to maintain.
+## ADR-0011: Interiors are a separate top-down scene, not iso — 2026-08-08
+Context: rooms in the prototype used a simple top-down grid while the city is
+isometric. Decision: keep interiors top-down (8×5) with their own runtime and
+renderer; the world switches modes (city | interior) rather than faking
+interiors inside the iso map.
+Consequences: simpler furniture collision, clearer readability, and the two
+renderers never fight over the camera.

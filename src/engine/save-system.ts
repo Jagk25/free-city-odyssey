@@ -1,5 +1,12 @@
-export const SAVE_VERSION = 1;
+export const SAVE_VERSION = 2;
 const KEY = 'freecity.save';
+
+export interface SideQuests {
+  cat: number;
+  pack: number;
+  photo: number;
+  photoSpots: number;
+}
 
 export interface SaveGame {
   version: number;
@@ -8,9 +15,13 @@ export interface SaveGame {
   cash: number;
   rep: number;
   energy: number;
+  xp: number;
+  level: number;
   quest: string;
   flags: Record<string, unknown>;
   inventory: Record<string, number>;
+  solvedTerminals: string[];
+  side: SideQuests;
   player: { x: number; y: number };
 }
 
@@ -22,14 +33,18 @@ export function defaultSave(): SaveGame {
     cash: 40,
     rep: 0,
     energy: 100,
+    xp: 0,
+    level: 1,
     quest: 'routine',
     flags: {},
     inventory: {},
+    solvedTerminals: [],
+    side: { cat: 0, pack: 0, photo: 0, photoSpots: 0 },
     player: { x: 5.25, y: 5.25 },
   };
 }
 
-/** Migrates any older/raw save shape to the current version. v0 = prototype { S, hx, hy }. */
+/** Migrates any older/raw save shape to the current version. v0 = prototype { S, hx, hy }; v1 = P1–P3 scaffold. */
 export function migrate(raw: Record<string, unknown>): SaveGame {
   const base = defaultSave();
   if (typeof raw !== 'object' || raw === null) return base;
@@ -50,7 +65,16 @@ export function migrate(raw: Record<string, unknown>): SaveGame {
     };
   }
 
-  return { ...base, ...(raw as Partial<SaveGame>), version: SAVE_VERSION };
+  const partial = raw as Partial<SaveGame>;
+  return {
+    ...base,
+    ...partial,
+    version: SAVE_VERSION,
+    xp: partial.xp ?? 0,
+    level: partial.level ?? 1,
+    solvedTerminals: partial.solvedTerminals ?? [],
+    side: partial.side ?? base.side,
+  };
 }
 
 export function save(state: SaveGame, storage: Storage = localStorage): void {
