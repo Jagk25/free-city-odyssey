@@ -28,6 +28,10 @@ async function boot(): Promise<void> {
   const world = new World(renderer, input);
   world.init();
 
+  (window as unknown as { __FCO_DEBUG__: { setMinute: (m: number) => void } }).__FCO_DEBUG__ = {
+    setMinute: (m: number) => world.setMinute(m),
+  };
+
   const loop = new GameLoop({
     update: (dt) => world.update(dt),
     render: (alpha) => world.render(alpha),

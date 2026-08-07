@@ -38,3 +38,12 @@ Decision: camera, rng, save, loop tick, and audio schedules are pure
 TypeScript with injectable dependencies (e.g. gamepad source).
 Consequences: 8 unit suites run in node in milliseconds; CI catches
 regressions before any browser test runs.
+
+## ADR-0007: Visual ambience is renderer-owned — 2026-08-07
+Context: cars, sky entities, particles, and weather visuals have no gameplay
+interaction; putting them in the sim would force save/sync overhead.
+Decision: presentation-only systems live in render/ and advance with render
+dt; sim-critical state (world clock, weather kind) stays in game/ and flows
+down via setWorldState.
+Consequences: sim stays lean and deterministic; visuals can be tuned without
+touching gameplay tests.

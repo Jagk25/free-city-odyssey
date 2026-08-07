@@ -4,27 +4,28 @@ Owned by: ORCHESTRATOR agent (see AGENTS.md).
 
 ## Current phase
 
-**P1 — Engine core** (this commit)
+**P2 — World renderer** (this commit)
 
 ## Gate history
 
 | Phase | Gate | Status | Evidence |
 |---|---|---|---|
-| P0 | dev server + unit tests + e2e smoke + CI green | PASS (scaffold) | commit b938180 |
-| P1 | tests pass; sprite moves via keyboard/touch/gamepad; save round-trips | PENDING | awaiting CI |
+| P0 | dev server + unit tests + e2e smoke + CI green | PASS | commit b938180 |
+| P1 | tests pass; sprite moves via keyboard/touch/gamepad; save round-trips | PASS | commit fbb31d3 |
+| P2 | 4-clock-times e2e; 60fps with all systems (?fps=1); zero console errors | PENDING | awaiting CI |
 
 ## Repo map (for agent context)
 
-- `src/engine/` — loop (testable tick), input (remap/touch/gamepad), camera, audio bus, save, rng, pool ✅
-- `src/render/` — IRenderer (+setPlayerPosition), PixiJS scene with follow camera, iso math ✅
-- `src/game/` — world shell with map-bounds clamp + autosave ✅
-- `src/data/` — all content JSON + map.json (districts) ✅
-- `tests/` — rng, pool, save, iso, camera, input, game-loop, audio ✅
-- `e2e/` — boot smoke ✅
+- `src/engine/` — loop, input, camera, audio, save, rng, pool ✅
+- `src/game/` — world, world-clock, weather ✅
+- `src/render/` — pixi-renderer, sky, city, particles, traffic, iso-math, renderer ✅
+- `src/data/` — map, buildings, props, NPCs, quests, interiors, items, dialogue, strings ✅
+- `tests/` — 12 suites ✅
+- `e2e/` — boot smoke + 4-clock-times ✅
 - `.github/workflows/` — ci.yml, pages.yml ✅
 
 ## Next
 
-P2 — world renderer: full iso tilemap, building features (columns, beacon,
-awnings, chimney smoke, lanterns, neon), dynamic sky (sun/moon/stars/clouds/
-birds), day/night lighting, weather director, traffic, pooled particles.
+P3 — characters & AI: player controller (4-dir animation, energy, axis-split
+collision), NPC utility AI at door mats, A* road graph, stuck recovery,
+seekers, cat, robbery event. Doorway regression e2e across all 14 doors.
