@@ -28,8 +28,12 @@ async function boot(): Promise<void> {
   const world = new World(renderer, input);
   world.init();
 
-  (window as unknown as { __FCO_DEBUG__: { setMinute: (m: number) => void } }).__FCO_DEBUG__ = {
+  (window as unknown as { __FCO_DEBUG__: Record<string, unknown> }).__FCO_DEBUG__ = {
     setMinute: (m: number) => world.setMinute(m),
+    teleport: (x: number, y: number) => world.teleport(x, y),
+    setFlag: (k: string, v: unknown) => world.setFlag(k, v),
+    npcPositions: () => world.npcPositions(),
+    startRobbery: () => world.debugStartRobbery(),
   };
 
   const loop = new GameLoop({

@@ -7,6 +7,7 @@ import { createSkyEntities, drawSky, type SkyEntities } from './sky';
 import { drawCityAnimated, drawCityBase, getEmitters, type EmitterPoint } from './city';
 import { ParticleSystem } from './particles';
 import { advanceCar, spawnCars, type Car } from './traffic';
+import { EntityRenderer } from './entities';
 import { mulberry32 } from '../engine/rng';
 import buildings from '../data/buildings.json';
 import props from '../data/props.json';
@@ -18,7 +19,7 @@ interface RainDrop {
   z: number;
 }
 
-/** P2 renderer: full living city — sky, city, traffic, particles, weather, night. */
+/** P3 renderer: full living city + animated characters. */
 export class PixiRenderer implements IRenderer {
   private app = new Application();
   private skyGfx = new Graphics();
@@ -27,9 +28,9 @@ export class PixiRenderer implements IRenderer {
   private animGfx = new Graphics();
   private trafficGfx = new Graphics();
   private particleGfx = new Graphics();
-  private playerGfx = new Graphics();
   private weatherGfx = new Graphics();
   private nightGfx = new Graphics();
+  private readonly entities = new EntityRenderer();
   private fpsText: Text | null = null;
 
   private readonly camera = new Camera(() => ({ w: this.width, h: this.height }), {
@@ -45,7 +46,7 @@ export class PixiRenderer implements IRenderer {
   private emitters: EmitterPoint[] = [];
   private rain: RainDrop[] = [];
 
-  private state: RenderWorldState = { minute: 480, weather: 'clear', playerX: map.playerSpawn.x, playerY: map.playerSpawn.y };
+  private state: RenderWorldState | null = null;
   private timeMs = 0;
   private lastFrame = 0;
   private animTimer = 0;
@@ -71,12 +72,11 @@ export class PixiRenderer implements IRenderer {
     const rng = mulberry32(99);
     this.rain = Array.from({ length: 72 }, () => ({ x: rng(), y: rng(), z: 0.3 + rng() }));
 
-    this.drawPlayerShape();
     this.worldLayer.addChild(this.cityGfx);
     this.worldLayer.addChild(this.animGfx);
     this.worldLayer.addChild(this.trafficGfx);
     this.worldLayer.addChild(this.particleGfx);
-    this.worldLayer.addChild(this.playerGfx);
+    this.worldLayer.addChild(this.entities.container);
     for (const label of labels) this.worldLayer.addChild(label);
 
     this.app.stage.addChild(this.skyGfx);
@@ -93,17 +93,12 @@ export class PixiRenderer implements IRenderer {
     this.lastFrame = performance.now();
   }
 
-  private drawPlayerShape(): void {
-    this.playerGfx.ellipse(0, 0, 12, 5).fill({ color: 0x030914, alpha: 0.5 });
-    this.playerGfx.rect(-8, -28, 16, 15).fill(0x3ab8ff);
-    this.playerGfx.circle(0, -34, 7).fill(0xefbd95);
-  }
-
   setWorldState(state: RenderWorldState): void {
     this.state = state;
   }
 
   begin(): void {
+    if (!this.state) return;
     const now = performance.now();
     const dtMs = Math.min(50, now - this.lastFrame);
     this.lastFrame = now;
@@ -122,8 +117,15 @@ export class PixiRenderer implements IRenderer {
     this.drawParticles(dt);
     this.drawWeather(dt);
 
+    this.entities.draw(
+      { x: this.state.playerX, y: this.state.playerY, dir: this.state.playerDir, moving: this.state.playerMoving, movePhase: this.state.playerMovePhase },
+      this.state.npcs,
+      this.state.cat,
+      this.state.robbery,
+      this.timeMs,
+    );
+
     const p = gridToScreen(this.state.playerX, this.state.playerY);
-    this.playerGfx.position.set(p.x, p.y);
     this.camera.follow({ x: p.x, y: p.y }, 0.12);
     this.worldLayer.position.set(-this.camera.x, -this.camera.y);
 
@@ -145,6 +147,7 @@ export class PixiRenderer implements IRenderer {
   }
 
   private drawTraffic(dt: number): void {
+    if (!this.state) return;
     this.trafficGfx.clear();
     const night = dayFactor(this.state.minute) < 0.4;
     for (const car of this.cars) {
@@ -186,6 +189,7 @@ export class PixiRenderer implements IRenderer {
   }
 
   private drawWeather(dt: number): void {
+    if (!this.state) return;
     this.weatherGfx.clear();
     if (this.state.weather === 'rain') {
       for (const drop of this.rain) {

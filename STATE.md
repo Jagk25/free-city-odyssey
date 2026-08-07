@@ -4,28 +4,28 @@ Owned by: ORCHESTRATOR agent (see AGENTS.md).
 
 ## Current phase
 
-**P2 — World renderer** (this commit)
+**P3 — Characters & AI** (this commit)
 
 ## Gate history
 
 | Phase | Gate | Status | Evidence |
 |---|---|---|---|
-| P0 | dev server + unit tests + e2e smoke + CI green | PASS | commit b938180 |
-| P1 | tests pass; sprite moves via keyboard/touch/gamepad; save round-trips | PASS | commit fbb31d3 |
-| P2 | 4-clock-times e2e; 60fps with all systems (?fps=1); zero console errors | PENDING | awaiting CI |
+| P0 | scaffold + tests + CI | PASS | commit b938180 |
+| P1 | engine core + tests | PASS | commit fbb31d3 |
+| P2 | 4-clock-times e2e; fps meter | PASS | commit d9560c8 |
+| P3 | doorway regression e2e (all 14 doors); NPCs never inside footprints >2s | PENDING | awaiting CI |
 
 ## Repo map (for agent context)
 
-- `src/engine/` — loop, input, camera, audio, save, rng, pool ✅
-- `src/game/` — world, world-clock, weather ✅
-- `src/render/` — pixi-renderer, sky, city, particles, traffic, iso-math, renderer ✅
-- `src/data/` — map, buildings, props, NPCs, quests, interiors, items, dialogue, strings ✅
-- `tests/` — 12 suites ✅
-- `e2e/` — boot smoke + 4-clock-times ✅
-- `.github/workflows/` — ci.yml, pages.yml ✅
+- `src/engine/` — 7 modules ✅
+- `src/game/` — world, world-clock, weather, collision, road-graph, npc, seekers, player, cat, events ✅
+- `src/render/` — 8 modules ✅
+- `src/data/` — all content JSON ✅
+- `tests/` — 20 suites ✅
+- `e2e/` — boot, 4-clock-times, doorway regression ✅
 
 ## Next
 
-P3 — characters & AI: player controller (4-dir animation, energy, axis-split
-collision), NPC utility AI at door mats, A* road graph, stuck recovery,
-seekers, cat, robbery event. Doorway regression e2e across all 14 doors.
+P4 — interiors & mini-games: 14 walkable rooms (furniture collision,
+resident NPC, hidden item, terminal), 9 mini-game components with JSON
+configs, inventory + trading, save round-trip.
