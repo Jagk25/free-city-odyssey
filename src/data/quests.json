@@ -1,0 +1,19 @@
+{
+  "main": [
+    {"id":"routine","title":"Routine Breaker","target":"cafe","next":"glasses"},
+    {"id":"glasses","title":"The Glasses Glitch","target":"dev","next":"bank"},
+    {"id":"bank","title":"Bank Day, Different Choice","target":"bank","next":"garden"},
+    {"id":"garden","title":"Hidden Garden Prototype","target":"warehouse","next":"server"},
+    {"id":"server","title":"Server Storm","target":"warehouse","next":"done"},
+    {"id":"done","title":"Day One: Complete","target":null,"next":null}
+  ],
+  "side": [
+    {"id":"cat","title":"Lost Cat","giver":"inn","stages":["ask","find","return","done"]},
+    {"id":"pack","title":"Package Run","giver":"shop","stages":["ask","deliver","done"]},
+    {"id":"photo","title":"Photo Tour","giver":"market","stages":["ask","spots","done"],"spots":[[1.5,6.5],[26.5,6.5],[13.5,26.5]]}
+  ],
+  "endings": [
+    {"id":"preserve","title":"The Watcher","flag":"ending.preserve"},
+    {"id":"awaken","title":"The Dawn","flag":"ending.awaken"}
+  ]
+}

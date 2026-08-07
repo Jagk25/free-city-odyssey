@@ -1,0 +1,16 @@
+[
+  {"id":"bank","name":"BANK","x":3,"y":3,"w":2,"d":2,"h":86,"color":"#d29a3e","feature":"columns","door":{"x":4,"y":5.9}},
+  {"id":"apt","name":"APARTMENT","x":8,"y":3,"w":2,"d":2,"h":70,"color":"#b76d59","feature":"balcony","door":{"x":9,"y":5.9}},
+  {"id":"cafe","name":"CAFÉ","x":3,"y":8,"w":2,"d":2,"h":58,"color":"#669b58","feature":"awning","door":{"x":4,"y":10.9}},
+  {"id":"shop","name":"SHOP","x":8,"y":8,"w":2,"d":2,"h":54,"color":"#558aac","feature":"sign","door":{"x":9,"y":10.9}},
+  {"id":"police","name":"POLICE HQ","x":15,"y":3,"w":2,"d":2,"h":76,"color":"#4b7db5","feature":"beacon","door":{"x":16,"y":5.9}},
+  {"id":"inn","name":"OLD INN","x":3,"y":15,"w":2,"d":2,"h":50,"color":"#8b6848","feature":"chimney","door":{"x":4,"y":17.9}},
+  {"id":"market","name":"NIGHT MARKET","x":8,"y":15,"w":2,"d":2,"h":42,"color":"#a9588b","feature":"lanterns","door":{"x":9,"y":17.9}},
+  {"id":"dev","name":"DEV OFFICE","x":15,"y":8,"w":2,"d":2,"h":72,"color":"#536999","feature":"dish","door":{"x":16,"y":10.9}},
+  {"id":"warehouse","name":"WAREHOUSE","x":15,"y":15,"w":3,"d":2,"h":52,"color":"#5a5e65","feature":"crane","door":{"x":16.5,"y":17.9}},
+  {"id":"library","name":"LIBRARY","x":3,"y":12,"w":2,"d":1,"h":46,"color":"#7a8a5a","feature":"columns","door":{"x":4,"y":13.9}},
+  {"id":"arcade","name":"ARCADE","x":12,"y":3,"w":2,"d":1,"h":44,"color":"#c05a9a","feature":"neon","door":{"x":13,"y":4.9}},
+  {"id":"museum","name":"MUSEUM","x":12,"y":12,"w":2,"d":2,"h":60,"color":"#9a8a6a","feature":"dome","door":{"x":13,"y":14.9}},
+  {"id":"hall","name":"CITY HALL","x":20,"y":3,"w":2,"d":2,"h":64,"color":"#8a9ab5","feature":"columns","door":{"x":21,"y":5.9}},
+  {"id":"hotel","name":"HOTEL","x":20,"y":15,"w":2,"d":2,"h":68,"color":"#b58a9a","feature":"balcony","door":{"x":21,"y":17.9}}
+]

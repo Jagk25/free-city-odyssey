@@ -1,0 +1,16 @@
+[
+  {"id":"cafe","name":"CAFÉ","color":"#669b58","puzzle":"memory","terminal":[6,2],"npc":{"name":"BARISTA","x":3,"y":1.5},"item":{"name":"Coffee Coupon","x":1.5,"y":3.2}},
+  {"id":"bank","name":"BANK VAULT","color":"#d29a3e","puzzle":"mastermind","terminal":[4,1],"npc":{"name":"TELLER","x":2,"y":2.5},"item":{"name":"Old Key","x":6.5,"y":3.2}},
+  {"id":"dev","name":"DEV OFFICE","color":"#536999","puzzle":"wire","terminal":[6,2],"npc":{"name":"DEV-AVATAR","x":2,"y":1.5},"item":{"name":"Glitch Lens","x":6.5,"y":1.2}},
+  {"id":"apt","name":"APARTMENT","color":"#b76d59","puzzle":"memory","terminal":[4,3],"npc":{"name":"ROOMMATE","x":2,"y":1.5},"item":{"name":"Photo Album","x":6.5,"y":3.2}},
+  {"id":"shop","name":"CORNER SHOP","color":"#558aac","puzzle":"lock","terminal":[6,2],"npc":{"name":"SHOPKEEPER","x":2,"y":2.5},"item":{"name":"Lucky Coin","x":6.5,"y":1.2}},
+  {"id":"police","name":"POLICE HQ","color":"#4b7db5","puzzle":"lineup","terminal":[3,2],"npc":{"name":"OFFICER","x":5,"y":1.5},"item":{"name":"Case File","x":1.5,"y":3.2}},
+  {"id":"inn","name":"OLD INN","color":"#8b6848","puzzle":"memory","terminal":[6,1],"npc":{"name":"INNKEEPER","x":2,"y":1.5},"item":{"name":"Old Map","x":6.5,"y":3.2}},
+  {"id":"market","name":"NIGHT MARKET","color":"#a9588b","puzzle":"haggle","terminal":[3,1],"npc":{"name":"VENDOR","x":5,"y":2.5},"item":{"name":"Rare Trinket","x":1.5,"y":1.2}},
+  {"id":"warehouse","name":"WAREHOUSE CORE","color":"#5a5e65","puzzle":"wire","terminal":[6,2],"npc":{"name":"GUARDIAN","x":3,"y":1.5},"item":{"name":"Core Chip","x":1.5,"y":3.2},"climax":true},
+  {"id":"library","name":"LIBRARY","color":"#7a8a5a","puzzle":"riddle","terminal":[6,2],"npc":{"name":"LIBRARIAN","x":2,"y":2.5},"item":{"name":"Ancient Book","x":1.5,"y":1.2}},
+  {"id":"arcade","name":"ARCADE","color":"#c05a9a","puzzle":"reaction","terminal":[6,1],"npc":{"name":"PLAYER-2","x":2,"y":2.5},"item":{"name":"High Score Token","x":6.5,"y":3.2}},
+  {"id":"museum","name":"MUSEUM","color":"#9a8a6a","puzzle":"riddle2","terminal":[4,1],"npc":{"name":"CURATOR","x":2,"y":2.5},"item":{"name":"Old Relic","x":6.5,"y":3.2}},
+  {"id":"hall","name":"CITY HALL","color":"#8a9ab5","puzzle":"lock","terminal":[6,2],"npc":{"name":"CLERK","x":2,"y":2.5},"item":{"name":"City Charter","x":1.5,"y":1.2}},
+  {"id":"hotel","name":"HOTEL","color":"#b58a9a","puzzle":"memory","terminal":[6,1],"npc":{"name":"CONCIERGE","x":2,"y":1.5},"item":{"name":"Room Key","x":6.5,"y":3.2}}
+]

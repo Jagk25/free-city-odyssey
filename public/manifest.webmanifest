@@ -1,0 +1,9 @@
+{
+  "name": "Free City: Odyssey",
+  "short_name": "FreeCity",
+  "start_url": ".",
+  "display": "fullscreen",
+  "background_color": "#0a1629",
+  "theme_color": "#0a1629",
+  "icons": []
+}

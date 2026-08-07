@@ -1,0 +1,16 @@
+[
+  {"location":"cafe","want":"Coffee Coupon","give":"Energy Drink","effect":{"energy":40}},
+  {"location":"bank","want":"Old Key","give":"Vault Access","effect":{"cash":50}},
+  {"location":"dev","want":"Glitch Lens","give":"Vision Upgrade","effect":{"flag":"vision"}},
+  {"location":"apt","want":"Photo Album","give":"Memory Fragment","effect":{"xp":30}},
+  {"location":"shop","want":"Lucky Coin","give":"Discount Card","effect":{"cash":20}},
+  {"location":"police","want":"Case File","give":"Detective Badge","effect":{"rep":3}},
+  {"location":"inn","want":"Old Map","give":"Secret Passage","effect":{"xp":25}},
+  {"location":"market","want":"Rare Trinket","give":"Mystery Box","effect":{"cash":30,"xp":20}},
+  {"location":"warehouse","want":"Core Chip","give":"System Override","effect":{"xp":50}},
+  {"location":"library","want":"Ancient Book","give":"Old Wisdom","effect":{"xp":35}},
+  {"location":"arcade","want":"High Score Token","give":"Golden Joystick","effect":{"cash":25,"xp":25}},
+  {"location":"museum","want":"Old Relic","give":"Curator Key","effect":{"rep":2,"xp":35}},
+  {"location":"hall","want":"City Charter","give":"Civic Seal","effect":{"rep":3,"xp":30}},
+  {"location":"hotel","want":"Room Key","give":"Suite Upgrade","effect":{"energy":100,"xp":20}}
+]

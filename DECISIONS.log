@@ -1,0 +1,25 @@
+# DECISIONS.log — append-only ADRs
+
+## ADR-0001: PixiJS (WebGL) over raw Canvas2D — 2026-08-07
+Context: prototype hit Canvas2D draw-call limits with layered city rendering.
+Decision: PixiJS v8 behind an `IRenderer` interface.
+Consequences: 10–50x draw throughput, filters for Glitch Vision bloom;
+Canvas2D fallback stays possible via the same interface.
+
+## ADR-0002: Fixed 60Hz simulation, interpolated render — 2026-08-07
+Context: prototype tied sim to rAF; tab-switch caused time drift.
+Decision: accumulator loop, max 5 steps/frame, backlog dropped after 250ms.
+Consequences: deterministic sim; tests can step the world without a browser.
+
+## ADR-0003: All content in JSON — 2026-08-07
+Context: prototype hardcoded buildings/NPCs/quests in one 83KB file.
+Decision: `src/data/*.json` is the single source of truth for content.
+Consequences: new buildings/quests/puzzles ship as data; validator scripts
+can check references (no dead dialogue nodes, no missing door mats).
+
+## ADR-0004: Door mats as first-class data — 2026-08-07
+Context: v9.0 bug — NPC targets inside collision footprints jammed entrances.
+Decision: every building in buildings.json carries an explicit `door` point;
+AI may only target door mats, never building centers.
+Consequences: doorway-block bug class eliminated by construction; e2e gate
+walks all 14 doors.

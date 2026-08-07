@@ -1,0 +1,21 @@
+{
+  "seekers": {
+    "maya": {"trigger": "!flags.metMaya", "tree": "maya"},
+    "zed": {"trigger": "flags.metMaya && !flags.metZed", "tree": "zed"},
+    "ivy": {"trigger": "side.photo === 1 && side.photoSpots < 3", "tree": "ivy"}
+  },
+  "trees": {
+    "maya": {"start": "maya.start"},
+    "zed": {"start": "zed.start"},
+    "ivy": {"start": "ivy.start"}
+  },
+  "generic": {
+    "options": ["mood", "lore", "greet"],
+    "lorePool": [
+      "lore.garden",
+      "lore.architect",
+      "lore.devoffice",
+      "lore.fragments"
+    ]
+  }
+}
