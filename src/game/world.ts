@@ -13,7 +13,7 @@ import { advanceMainQuest, mainQuestTarget, mainQuestTitle, sideStageLabel, side
 import { createCutscene, type Slide } from './cutscenes';
 import { pickFragment, allCollected, FRAGMENTS } from './vision';
 import type { DialogueTree } from './dialogue';
-import { createRoom, moveInRoom, nearPoint, type FurnItem, type RoomState } from '../interiors/interior-runtime';
+import { createRoom, moveInRoom, nearPoint, ROOM_H, type FurnItem, type RoomState } from '../interiors/interior-runtime';
 import { addItem, canTrade, executeTrade, hasItem, removeItem, type Trade } from './inventory';
 import type { MinigameConfig } from '../minigames/runtime';
 import type { HudData } from '../ui/hud';
@@ -70,22 +70,21 @@ const LINEUP = {
   clues:
     'Three suspects. The evidence: the thief wore a red scarf; the thief wore NO gloves; no witness saw an umbrella. Who do you charge?',
   suspects: [
-    { label: 'Rex — tall, red scarf, bare hands', guilty: true },
-    { label: 'Bex — heavy gloves, slight limp', guilty: false },
-    { label: 'Juno — never without an umbrella', guilty: false },
+    { label: 'Rex - tall, red scarf, bare hands', guilty: true },
+    { label: 'Bex - heavy gloves, slight limp', guilty: false },
+    { label: 'Juno - never without an umbrella', guilty: false },
   ],
 };
 
 const QUEST_DESCS: Record<string, string> = {
-  routine: 'Visit the Café — someone needs help.',
-  glasses: 'Reach the Dev Office — a signal is calling.',
-  bank: 'Head to the Bank — something is wrong.',
+  routine: 'Visit the Cafe - someone needs help.',
+  glasses: 'Reach the Dev Office - a signal is calling.',
+  bank: 'Head to the Bank - something is wrong.',
   garden: 'Investigate the Warehouse flicker.',
   server: 'Enter the Warehouse, solve the core.',
-  done: 'Day One complete — the city is yours.',
+  done: 'Day One complete - the city is yours.',
 };
 
-/** P5+P6 world: full story, dialogue, cutscenes, endings, vision, side quests, HUD. */
 export class World {
   private state: SaveGame = defaultSave();
   private weather: WeatherState = initialWeather();
@@ -125,7 +124,6 @@ export class World {
     }
   }
 
-  // ---- debug/e2e hooks ----
   setMinute(minute: number): void {
     this.state.minute = minute;
   }
@@ -202,7 +200,6 @@ export class World {
     });
   }
 
-  /** Pause-menu save + minimap read accessors (called from main.ts). */
   saveState(): SaveGame {
     return this.state;
   }
@@ -211,7 +208,6 @@ export class World {
     return { x: this.player.x, y: this.player.y };
   }
 
-  // ---- interiors ----
   private interiorDef(id: string): InteriorDef | undefined {
     return (interiors as InteriorDef[]).find((i) => i.id === id);
   }
@@ -238,7 +234,7 @@ export class World {
       case 'wire':
         return { ...base, type: 'wire', desc: 'Connect each left node to its matching color on the right.' };
       case 'mastermind':
-        return { ...base, type: 'mastermind', desc: 'Deduce the 4-digit code (digits 1-6). ● right place, ○ wrong place. 6 attempts.' };
+        return { ...base, type: 'mastermind', desc: 'Deduce the 4-digit code (digits 1-6). 6 attempts.' };
       case 'riddle':
         return { ...base, type: 'riddle', riddle: RIDDLES.library, desc: RIDDLES.library!.q };
       case 'riddle2':
@@ -294,8 +290,8 @@ export class World {
         sp: 'THE CORE',
         t: 'The loop trembles, waiting for your decision. This choice is permanent.',
         c: [
-          { t: 'Preserve the Loop — keep Free City safe and familiar', fx: 'endPreserve' },
-          { t: 'Awaken the City — free every citizen from the loop', fx: 'endAwaken' },
+          { t: 'Preserve the Loop - keep Free City safe and familiar', fx: 'endPreserve' },
+          { t: 'Awaken the City - free every citizen from the loop', fx: 'endAwaken' },
         ],
       },
     };
@@ -355,7 +351,7 @@ export class World {
           ? 'A little lonely. Most days everyone just walks past.'
           : 'Strangely good. Like something in the air is changing.';
     const lore = [
-      'They say the northwest park used to be a real garden — wild, unscripted.',
+      'They say the northwest park used to be a real garden - wild, unscripted.',
       'The Architect watches through the lamps. Or so the rumor goes.',
       'The Dev Office knows more than they say. They always do.',
       'Six fragments of the First World are hidden in the city. Nobody remembers why.',
@@ -363,16 +359,16 @@ export class World {
     const tree: DialogueTree = {
       start: {
         sp: npc.def.name,
-        t: '"Oh — hello, Noa."',
+        t: 'Oh - hello, Noa.',
         c: [
           { t: 'How are you feeling today?', next: 'mood' },
           { t: 'What do you know about this city?', next: 'lore' },
           { t: 'Just saying hi.', next: 'bye', fx: 'greet' },
         ],
       },
-      mood: { sp: npc.def.name, t: `"${mood}"`, c: [{ t: 'Hang in there.', next: 'bye' }] },
-      lore: { sp: npc.def.name, t: `"${lore}"`, c: [{ t: 'Interesting...', next: 'bye' }] },
-      bye: { sp: npc.def.name, t: '"See you around, Noa."' },
+      mood: { sp: npc.def.name, t: mood, c: [{ t: 'Hang in there.', next: 'bye' }] },
+      lore: { sp: npc.def.name, t: lore, c: [{ t: 'Interesting...', next: 'bye' }] },
+      bye: { sp: npc.def.name, t: 'See you around, Noa.' },
     };
     this.ui.openDialogue(
       tree,
@@ -446,7 +442,7 @@ export class World {
       ) {
         this.cat.following = true;
         this.state.side.cat = 2;
-        this.ui.notify('The cat is following you — lead her back to the Old Inn.');
+        this.ui.notify('The cat is following you - lead her back to the Old Inn.');
         this.ui.sfx('fragment');
         return;
       }
@@ -521,7 +517,7 @@ export class World {
       tree = {
         start: {
           sp: 'BARISTA',
-          t: '"You look like you need more than coffee today. Someone outside was asking for help — maybe break your routine?"',
+          t: 'You look like you need more than coffee today. Someone outside was asking for help - maybe break your routine?',
           c: [
             { t: "I'll go help them (+2 rep)", fx: 'questRoutine' },
             { t: 'Just coffee, thanks (+10 energy)', fx: 'coffee' },
@@ -532,7 +528,7 @@ export class World {
       tree = {
         start: {
           sp: 'DEV-AVATAR',
-          t: '"The city has layers you haven\'t seen. Take this lens — it reveals what\'s hidden."',
+          t: "The city has layers you haven't seen. Take this lens - it reveals what's hidden.",
           c: [{ t: 'Take the Glitch Lens', fx: 'takeLens' }],
         },
       };
@@ -540,7 +536,7 @@ export class World {
       tree = {
         start: {
           sp: 'INNKEEPER',
-          t: '"My cat ran off into the city! If you find her, she\'ll follow you back. Please!"',
+          t: "My cat ran off into the city! If you find her, she'll follow you back. Please!",
           c: [
             { t: "I'll find her (start quest)", fx: 'startCat' },
             { t: 'Sorry, busy', fx: undefined },
@@ -551,7 +547,7 @@ export class World {
       tree = {
         start: {
           sp: 'SHOPKEEPER',
-          t: '"I have a package that needs to reach the Dev Office. Five minutes of your time, ten of my dollars."',
+          t: 'I have a package that needs to reach the Dev Office. Five minutes of your time, ten of my dollars.',
           c: [
             { t: 'Deliver it (start quest)', fx: 'startPack' },
             { t: 'Not now', fx: undefined },
@@ -562,7 +558,7 @@ export class World {
       tree = {
         start: {
           sp: 'DEV-AVATAR',
-          t: '"Ah, my parts! Right on time."',
+          t: 'Ah, my parts! Right on time.',
           c: [{ t: 'Hand over the package (+$10, +25 XP)', fx: 'deliverPack' }],
         },
       };
@@ -570,7 +566,7 @@ export class World {
       tree = {
         start: {
           sp: 'VENDOR',
-          t: '"Three spots in this city glow golden at the right angle. Stand in each and I\'ll pay for the memories."',
+          t: "Three spots in this city glow golden at the right angle. Stand in each and I'll pay for the memories.",
           c: [
             { t: "I'll find them (start quest)", fx: 'startPhoto' },
             { t: 'Maybe later', fx: undefined },
@@ -583,7 +579,7 @@ export class World {
         tree = {
           start: {
             sp: def.npc.name,
-            t: `"You have something I need. Trade your ${trade.want} for my ${trade.give}?"`,
+            t: `You have something I need. Trade your ${trade.want} for my ${trade.give}?`,
             c: [
               { t: 'Trade', fx: `trade:${def.id}` },
               { t: 'Not now', fx: undefined },
@@ -594,7 +590,7 @@ export class World {
         tree = {
           start: {
             sp: def.npc.name,
-            t: '"Welcome. The terminal over there runs a challenge — solve it and there\'s a reward in it for you."',
+            t: "Welcome. The terminal over there runs a challenge - solve it and there's a reward in it for you.",
           },
         };
       }
@@ -655,6 +651,11 @@ export class World {
     if (this.mode === 'interior' && this.room) {
       const def = this.interiorDef(this.room.id);
       if (def) moveInRoom(this.room, this.roomFurn(def), axis, dt);
+      if (this.room.py >= ROOM_H - 0.38 && Math.abs(this.room.px - 4) < 1.1) {
+        this.leaveInterior();
+        this.ui.sfx('door');
+        this.ui.notify('You step back out into the city.');
+      }
       if (this.input.wasPressed('interact')) this.interact();
       this.input.endFrame();
       return;
@@ -708,7 +709,7 @@ export class World {
         if (allCollected(this.fragments)) {
           this.state.flags.boardAwakens = true;
           this.gainXp(120);
-          this.ui.notify('All fragments found — The Board Awakens.');
+          this.ui.notify('All fragments found - The Board Awakens.');
         }
       }
     }
