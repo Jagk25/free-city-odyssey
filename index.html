@@ -12,7 +12,9 @@
       canvas { display: block; }
       .hidden { display: none !important; }
       .panel { position: fixed; z-index: 4; background: #0a1629ea; border: 1px solid #83d9ff66; border-radius: 10px; color: #eaf6ff; padding: 10px 12px; font-size: 11px; line-height: 1.6; pointer-events: none; }
-      #boot { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; color: #5cffa0; font-size: 14px; background: #0a1629; letter-spacing: 2px; z-index: 10; }
+      #boot { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 12px; color: #5cffa0; font-size: 14px; background: #0a1629; letter-spacing: 2px; z-index: 10; }
+      #boot .logo { font-size: 22px; font-weight: bold; color: #ffdf70; text-shadow: 0 0 18px #ffdf7066; animation: bootpulse 1.6s ease-in-out infinite; }
+      @keyframes bootpulse { 0%, 100% { opacity: 0.7; transform: scale(1); } 50% { opacity: 1; transform: scale(1.04); } }
       #hud { top: 12px; left: 12px; min-width: 190px; }
       #hud b, #quest b, #ws b, #inv b { color: #ffdf70; }
       .bar { height: 7px; background: #1c2c40; border-radius: 4px; overflow: hidden; margin: 2px 0 4px; border: 1px solid #ffffff14; }
@@ -64,46 +66,55 @@
       #dlg { position: fixed; inset: 0; display: flex; align-items: flex-end; justify-content: center; background: #0008; z-index: 19; padding: 16px; }
       #dlg-speaker { color: #ffdc68; font-weight: bold; font-size: 13px; margin-bottom: 6px; }
       #cine { position: fixed; inset: 0; z-index: 28; }
-      #cine .bar-t, #cine .bar-b { position: absolute; left: 0; right: 0; height: 12vh; background: #000; }
+      #cine .bar-t, #cine .bar-b { position: absolute; left: 0; right: 0; height: 0; background: #000; transition: height 0.6s cubic-bezier(0.7, 0, 0.3, 1); z-index: 3; }
       #cine .bar-t { top: 0; }
       #cine .bar-b { bottom: 0; }
-      #cine-bg { position: absolute; left: 0; right: 0; top: 12vh; bottom: 12vh; background: linear-gradient(180deg, #0a1426, #132036); display: flex; align-items: flex-end; justify-content: center; padding: 5vh 8vw; cursor: pointer; }
-      #cine-speaker { color: #ffdf70; font: bold 13px monospace; margin-bottom: 8px; min-height: 16px; }
-      #cine-text { color: #eaf6ff; font: 14px monospace; line-height: 1.7; min-height: 90px; text-shadow: 0 1px 4px #000; max-width: 640px; }
+      #cine.open .bar-t, #cine.open .bar-b { height: 12vh; }
+      #cine-canvas { position: absolute; left: 0; right: 0; top: 0; bottom: 0; width: 100%; height: 100%; animation: kenburns 24s ease-in-out infinite alternate; }
+      @keyframes kenburns { from { transform: scale(1); } to { transform: scale(1.08); } }
+      #cine-vignette { position: absolute; inset: 0; background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.55) 100%); pointer-events: none; z-index: 2; }
+      #cine-grain { position: absolute; inset: 0; pointer-events: none; z-index: 2; opacity: 0.5; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E"); animation: grain 0.4s steps(3) infinite; }
+      @keyframes grain { 0% { background-position: 0 0; } 33% { background-position: -30px 20px; } 66% { background-position: 25px -25px; } 100% { background-position: 0 0; } }
+      #cine-bg { position: absolute; left: 0; right: 0; top: 0; bottom: 0; display: flex; align-items: flex-end; justify-content: center; padding: 0 8vw 16vh; cursor: pointer; z-index: 4; }
+      #cine-panel { max-width: 640px; transition: opacity 0.25s; }
+      #cine-panel.fade { opacity: 0; }
+      #cine-speaker { color: #ffdf70; font: bold 13px monospace; margin-bottom: 8px; min-height: 16px; text-shadow: 0 1px 6px #000; }
+      #cine-text { color: #eaf6ff; font: 14px monospace; line-height: 1.7; min-height: 90px; text-shadow: 0 1px 4px #000; }
+      #cine-hint { color: #9fc9e8; font: 9px monospace; margin-top: 10px; opacity: 0.7; }
       #cine-skip { position: absolute; top: 13vh; right: 16px; background: #102b49ea; color: #ffdf70; border: 1px solid #8ddcff88; border-radius: 8px; padding: 6px 10px; font: 10px monospace; z-index: 29; }
       #pause { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: #000c; z-index: 25; }
       @media (min-width: 820px) { #touch { opacity: 0.55; transform: scale(0.85); transform-origin: bottom left; } }
     </style>
   </head>
   <body>
-    <div id="boot">FREE CITY: ODYSSEY — loading…</div>
-    <div id="version">v1.0.0 · ODYSSEY</div>
-    <div id="hud" class="panel"><b>FREE CITY</b> · Odyssey<br />☀ Day <span id="hud-day">1</span> · <span id="hud-time">08:00</span><br />Energy<div class="bar"><i id="hud-energy" style="width: 100%; background: #61e08a"></i></div>💰 $<span id="hud-cash">40</span> · ⭐ Rep <span id="hud-rep">0</span><br />📍 <span id="hud-district">Downtown</span></div>
+    <div id="boot"><div class="logo">FREE CITY: ODYSSEY</div><div>loading...</div></div>
+    <div id="version">v1.1.0 . CINEMATIC</div>
+    <div id="hud" class="panel"><b>FREE CITY</b> . Odyssey<br />Day <span id="hud-day">1</span> . <span id="hud-time">08:00</span><br />Energy<div class="bar"><i id="hud-energy" style="width: 100%; background: #61e08a"></i></div>$<span id="hud-cash">40</span> . Rep <span id="hud-rep">0</span><br /><span id="hud-district">Downtown</span></div>
     <div id="quest" class="panel"><b>MAIN MISSION</b><br /><span id="q-main">Explore the district.</span><div id="q-sides"></div></div>
-    <div id="ws" class="panel"><b>WORLD STATUS</b><br /><span id="ws-weather">Clear skies</span><br />Level <span id="ws-level">1</span> · XP <span id="ws-xp">0/100</span><br />Fragments <span id="ws-frag">0/6</span></div>
+    <div id="ws" class="panel"><b>WORLD STATUS</b><br /><span id="ws-weather">Clear skies</span><br />Level <span id="ws-level">1</span> . XP <span id="ws-xp">0/100</span><br />Fragments <span id="ws-frag">0/6</span></div>
     <div id="inv" class="panel"><b>INVENTORY</b><br /><span id="inv-list">(empty)</span></div>
     <canvas id="mini" width="96" height="96"></canvas>
     <div id="prompt"></div>
     <div id="feed"></div>
     <div id="touch">
       <div class="pad">
-        <button data-action="up">▲</button>
-        <button data-action="left">◀</button>
-        <button data-action="right">▶</button>
-        <button data-action="down">▼</button>
+        <button data-action="up">^</button>
+        <button data-action="left"><</button>
+        <button data-action="right">></button>
+        <button data-action="down">v</button>
       </div>
       <button id="act" data-action="interact">E<br /><small>ACT</small></button>
     </div>
-    <button id="music">♫ MUSIC</button>
-    <button id="install" class="hidden">⬇ INSTALL</button>
-    <button id="leave" class="hidden">◀ LEAVE</button>
+    <button id="music">MUSIC</button>
+    <button id="install" class="hidden">INSTALL</button>
+    <button id="leave" class="hidden">&lt; LEAVE</button>
     <div id="debug">
-      <button id="dbg-weather">⚡ Weather</button>
-      <button id="dbg-robbery">⚡ Robbery</button>
-      <button id="dbg-xp">⚡ +100 XP</button>
-      <button id="dbg-vision">⚡ Vision</button>
-      <button id="dbg-items">⚡ All Items</button>
-      <button id="dbg-intro">⚡ Replay Intro</button>
+      <button id="dbg-weather">Weather</button>
+      <button id="dbg-robbery">Robbery</button>
+      <button id="dbg-xp">+100 XP</button>
+      <button id="dbg-vision">Vision</button>
+      <button id="dbg-items">All Items</button>
+      <button id="dbg-intro">Replay Intro</button>
     </div>
     <div id="mg" class="hidden">
       <div id="mg-box">
@@ -123,11 +134,15 @@
     <div id="cine" class="hidden">
       <div class="bar-t"></div>
       <div class="bar-b"></div>
-      <button id="cine-skip">SKIP ▶</button>
+      <canvas id="cine-canvas"></canvas>
+      <div id="cine-vignette"></div>
+      <div id="cine-grain"></div>
+      <button id="cine-skip">SKIP &gt;</button>
       <div id="cine-bg">
-        <div>
+        <div id="cine-panel">
           <div id="cine-speaker"></div>
           <div id="cine-text"></div>
+          <div id="cine-hint">click / E to continue</div>
         </div>
       </div>
     </div>
@@ -136,10 +151,10 @@
         <h2>PAUSED</h2>
         <p>Free City is waiting for you.</p>
         <div class="btns">
-          <button id="p-resume">▶ Resume</button>
-          <button id="p-save">💾 Save Now</button>
-          <button id="p-music">♫ Toggle Music</button>
-          <button id="p-reset">🗑 Reset Save</button>
+          <button id="p-resume">Resume</button>
+          <button id="p-save">Save Now</button>
+          <button id="p-music">Toggle Music</button>
+          <button id="p-reset">Reset Save</button>
         </div>
       </div>
     </div>
