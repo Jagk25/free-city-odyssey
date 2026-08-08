@@ -1,3 +1,4 @@
+import type { SideQuests } from '../engine/save-system';
 import type { Npc } from './npc';
 import { facing } from './npc';
 import { moveWithCollision } from './collision';
@@ -5,13 +6,13 @@ import { findPath } from './road-graph';
 
 export interface SeekerRule {
   npcId: string;
-  when: (flags: Record<string, unknown>, side: Record<string, unknown>) => boolean;
+  when: (flags: Record<string, unknown>, side: SideQuests) => boolean;
 }
 
 export const SEEKER_RULES: readonly SeekerRule[] = [
   { npcId: 'maya', when: (flags) => !flags.metMaya },
   { npcId: 'zed', when: (flags) => Boolean(flags.metMaya) && !flags.metZed },
-  { npcId: 'ivy', when: (_flags, side) => side.photo === 1 && (side.photoSpots as number) < 3 },
+  { npcId: 'ivy', when: (_flags, side) => side.photo === 1 && side.photoSpots < 3 },
 ];
 
 const SEEK_SPEED = 1.15;
@@ -20,7 +21,7 @@ const REPATH_SECONDS = 2;
 export function activeSeeker(
   rule: SeekerRule,
   flags: Record<string, unknown>,
-  side: Record<string, unknown>,
+  side: SideQuests,
 ): boolean {
   return rule.when(flags, side);
 }
@@ -32,7 +33,7 @@ export function updateSeekers(
   npcs: Npc[],
   player: { x: number; y: number },
   flags: Record<string, unknown>,
-  side: Record<string, unknown>,
+  side: SideQuests,
   dt: number,
 ): void {
   for (const rule of SEEKER_RULES) {
