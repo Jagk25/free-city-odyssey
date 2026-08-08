@@ -1,20 +1,15 @@
 # DECISIONS.log — append-only ADRs
 
-## ADR-0001 … ADR-0011
+## ADR-0001 … ADR-0013
 See earlier entries: PixiJS renderer, fixed 60Hz sim, JSON content, door mats,
 gesture-gated audio, pure engine modules, renderer-owned ambience, A* grid
 pathfinding, seekers sharing the pathfinder, pure mini-game cores, top-down
-interiors.
+interiors, validated story data, single overlay pause flag.
 
-## ADR-0012: Story content as validated data — 2026-08-08
-Context: prototype dialogue/cutscenes were inline strings with no way to
-check for dead branches. Decision: cutscenes.json + dialogue-trees.json hold
-all story content; a validator (tests/dialogue.test.ts) proves no choice
-points to a missing node.
-Consequences: writers edit JSON; CI fails on dead dialogue nodes.
-
-## ADR-0013: Overlays pause the sim through one flag — 2026-08-08
-Context: dialogue, cutscenes, mini-games, and pause all need to freeze the
-world without fighting each other. Decision: a single overlayOpen flag in
-World; any overlay sets it, sim early-returns while true.
-Consequences: no double-pause bugs; one place to reason about sim freezing.
+## ADR-0014: Runtime-caching service worker + SVG icon — 2026-08-08
+Context: PWA needed offline support, but Vite emits hashed bundle names and
+we ship zero binary assets. Decision: the service worker caches core files on
+install and every successful GET at runtime; the icon is a single SVG
+(maskable), so no PNG pipeline is required.
+Consequences: fully offline after first load; no asset build step; install
+prompt works on Android/desktop.

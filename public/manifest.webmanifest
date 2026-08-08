@@ -1,9 +1,14 @@
 {
   "name": "Free City: Odyssey",
   "short_name": "FreeCity",
-  "start_url": ".",
+  "description": "A living-city story RPG in the browser. Explore six districts, enter every building, befriend AI citizens, and decide the city's fate.",
+  "start_url": "./",
+  "scope": "./",
   "display": "fullscreen",
+  "orientation": "any",
   "background_color": "#0a1629",
   "theme_color": "#0a1629",
-  "icons": []
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
 }

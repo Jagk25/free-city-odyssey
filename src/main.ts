@@ -11,6 +11,10 @@ import { save } from './engine/save-system';
 import buildings from './data/buildings.json';
 import map from './data/map.json';
 
+interface InstallPromptEvent extends Event {
+  prompt(): Promise<void>;
+}
+
 async function boot(): Promise<void> {
   const renderer = new PixiRenderer();
   await renderer.init();
@@ -25,14 +29,37 @@ async function boot(): Promise<void> {
   window.addEventListener('pointerdown', unlock, { once: true });
   window.addEventListener('keydown', unlock, { once: true });
 
+  const buzz = (ms: number): void => {
+    if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(ms);
+  };
+
   document.querySelectorAll<HTMLElement>('[data-action]').forEach((el) => {
     input.bindTouchButton(el, el.dataset.action as Action);
+    el.addEventListener('pointerdown', () => buzz(8));
   });
   document.getElementById('music')?.addEventListener('click', () => {
     void audio.unlock().then(() => {
       const on = audio.toggleMusic();
       document.getElementById('music')!.textContent = on ? '♫ MUSIC: ON' : '♫ MUSIC: OFF';
     });
+  });
+
+  // PWA: offline service worker (production only) + install prompt.
+  if ('serviceWorker' in navigator && !import.meta.env.DEV) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').catch(() => undefined);
+    });
+  }
+  let deferredInstall: InstallPromptEvent | null = null;
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredInstall = e as InstallPromptEvent;
+    document.getElementById('install')?.classList.remove('hidden');
+  });
+  document.getElementById('install')?.addEventListener('click', () => {
+    void deferredInstall?.prompt();
+    deferredInstall = null;
+    document.getElementById('install')?.classList.add('hidden');
   });
 
   const mgHost = createMinigameHost(document.getElementById('mg')!, (id) => audio.sfx(id));

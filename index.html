@@ -4,7 +4,8 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
     <meta name="theme-color" content="#0a1629" />
-    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" href="./icon.svg" type="image/svg+xml" />
     <title>Free City: Odyssey</title>
     <style>
       html, body { margin: 0; height: 100%; background: #0a1629; overflow: hidden; font-family: monospace; }
@@ -29,22 +30,23 @@
       #version { position: fixed; left: 50%; top: 10px; transform: translateX(-50%); z-index: 9; background: #ffdf70; color: #1a1400; font: bold 11px monospace; padding: 5px 12px; border-radius: 20px; box-shadow: 0 2px 10px #0008; }
       #touch { position: fixed; display: flex; justify-content: space-between; left: 14px; right: 14px; bottom: max(14px, env(safe-area-inset-bottom)); pointer-events: none; z-index: 5; }
       .pad { display: grid; grid-template: repeat(3, 52px) / repeat(3, 52px); gap: 4px; pointer-events: auto; }
-      .pad button, #act, #music, #leave, #debug button { color: #fff; background: #102b49e6; border: 1px solid #8ddcff88; border-radius: 14px; font: bold 18px monospace; touch-action: none; }
+      .pad button, #act, #music, #leave, #install, #debug button { color: #fff; background: #102b49e6; border: 1px solid #8ddcff88; border-radius: 14px; font: bold 18px monospace; touch-action: none; }
       .pad button[data-action="up"] { grid-column: 2; }
       .pad button[data-action="left"] { grid-column: 1; grid-row: 2; }
       .pad button[data-action="right"] { grid-column: 3; grid-row: 2; }
       .pad button[data-action="down"] { grid-column: 2; grid-row: 3; }
       #act { align-self: center; width: 72px; height: 72px; border-radius: 50%; color: #ffdf70; font-size: 14px; pointer-events: auto; }
       #music { position: fixed; right: 12px; bottom: 100px; padding: 6px 10px; font-size: 11px; color: #ffdf70; pointer-events: auto; z-index: 7; }
+      #install { position: fixed; right: 12px; bottom: 140px; padding: 6px 10px; font-size: 11px; color: #5cffa0; pointer-events: auto; z-index: 7; }
       #leave { position: fixed; left: 12px; bottom: 100px; padding: 8px 12px; font-size: 11px; color: #ffdf70; z-index: 16; }
-      #debug { position: fixed; right: 12px; bottom: 140px; z-index: 6; display: flex; flex-direction: column; gap: 4px; }
+      #debug { position: fixed; right: 12px; bottom: 180px; z-index: 6; display: flex; flex-direction: column; gap: 4px; }
       #debug button { font-size: 9px; padding: 4px 7px; text-align: left; color: #c9b6ff; border-color: #8d6dff77; background: #241a3fea; }
       #mg { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: #000a; z-index: 20; padding: 16px; }
       #mg-box, .dlg-box { width: min(540px, 100%); background: #0e1c34; border: 1px solid #ffffff2a; border-radius: 14px; padding: 18px; color: #e6f0ff; max-height: 88vh; overflow: auto; }
       #mg-title, .dlg-box h2 { margin: 0 0 8px; color: #ffdc68; font-size: 16px; }
       #mg-desc, .dlg-box p { line-height: 1.55; font-size: 13px; color: #cfe0f5; white-space: pre-wrap; }
-      #mg-actions, #dlg-choices { display: grid; gap: 7px; margin-top: 12px; }
-      #mg-actions button, #dlg-choices button { font: 12px monospace; text-align: left; padding: 9px 11px; background: #1c3459; border: 1px solid #ffffff26; border-radius: 8px; color: #fff; }
+      #mg-actions, #dlg-choices, #pause .btns { display: grid; gap: 7px; margin-top: 12px; }
+      #mg-actions button, #dlg-choices button, #pause button { font: 12px monospace; text-align: left; padding: 9px 11px; background: #1c3459; border: 1px solid #ffffff26; border-radius: 8px; color: #fff; }
       .mg-pads { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
       .mg-pads button { height: 52px; border-radius: 10px; border: 1px solid #fff2; }
       .mg-dials { display: flex; gap: 14px; justify-content: center; margin: 14px 0; }
@@ -70,13 +72,12 @@
       #cine-text { color: #eaf6ff; font: 14px monospace; line-height: 1.7; min-height: 90px; text-shadow: 0 1px 4px #000; max-width: 640px; }
       #cine-skip { position: absolute; top: 13vh; right: 16px; background: #102b49ea; color: #ffdf70; border: 1px solid #8ddcff88; border-radius: 8px; padding: 6px 10px; font: 10px monospace; z-index: 29; }
       #pause { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: #000c; z-index: 25; }
-      #pause button { font: 12px monospace; text-align: left; padding: 9px 11px; background: #1c3459; border: 1px solid #ffffff26; border-radius: 8px; color: #fff; }
       @media (min-width: 820px) { #touch { opacity: 0.55; transform: scale(0.85); transform-origin: bottom left; } }
     </style>
   </head>
   <body>
     <div id="boot">FREE CITY: ODYSSEY — loading…</div>
-    <div id="version">v0.7.0 · ODYSSEY</div>
+    <div id="version">v1.0.0 · ODYSSEY</div>
     <div id="hud" class="panel"><b>FREE CITY</b> · Odyssey<br />☀ Day <span id="hud-day">1</span> · <span id="hud-time">08:00</span><br />Energy<div class="bar"><i id="hud-energy" style="width: 100%; background: #61e08a"></i></div>💰 $<span id="hud-cash">40</span> · ⭐ Rep <span id="hud-rep">0</span><br />📍 <span id="hud-district">Downtown</span></div>
     <div id="quest" class="panel"><b>MAIN MISSION</b><br /><span id="q-main">Explore the district.</span><div id="q-sides"></div></div>
     <div id="ws" class="panel"><b>WORLD STATUS</b><br /><span id="ws-weather">Clear skies</span><br />Level <span id="ws-level">1</span> · XP <span id="ws-xp">0/100</span><br />Fragments <span id="ws-frag">0/6</span></div>
@@ -94,6 +95,7 @@
       <button id="act" data-action="interact">E<br /><small>ACT</small></button>
     </div>
     <button id="music">♫ MUSIC</button>
+    <button id="install" class="hidden">⬇ INSTALL</button>
     <button id="leave" class="hidden">◀ LEAVE</button>
     <div id="debug">
       <button id="dbg-weather">⚡ Weather</button>
@@ -133,7 +135,7 @@
       <div class="dlg-box">
         <h2>PAUSED</h2>
         <p>Free City is waiting for you.</p>
-        <div style="display: grid; gap: 7px; margin-top: 12px">
+        <div class="btns">
           <button id="p-resume">▶ Resume</button>
           <button id="p-save">💾 Save Now</button>
           <button id="p-music">♫ Toggle Music</button>
