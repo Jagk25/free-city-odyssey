@@ -175,7 +175,7 @@ async function boot(): Promise<void> {
 
   // Pause menu.
   const pause = document.getElementById('pause')!;
-  const togglePause = (): void => pause.classList.toggle('hidden');
+  const togglePause = (): void => { pause.classList.toggle('hidden'); };
   document.getElementById('p-resume')!.onclick = togglePause;
   document.getElementById('p-save')!.onclick = () => {
     save(world.saveState());
