@@ -9,7 +9,6 @@ export interface Tone {
   vol: number;
 }
 
-/** Procedural SFX schedule — pure data, unit-tested, zero assets. */
 export const SFX: Record<SfxId, Tone[]> = {
   door: [{ freq: 180, delay: 0, dur: 0.12, type: 'square', vol: 0.05 }],
   coin: [
@@ -36,7 +35,6 @@ export const SFX: Record<SfxId, Tone[]> = {
   ],
 };
 
-/** Original chiptune score — semitone rows, 8 steps each, cycling. */
 export const SONG_ROWS: number[][] = [
   [0, 4, 7, 11, 7, 4, 2, 4],
   [0, 5, 7, 12, 7, 5, 2, 5],
@@ -55,10 +53,29 @@ export function musicNote(step: number): { freq: number; bass: boolean; sparkle:
   };
 }
 
-/**
- * Gesture-gated audio bus. Browsers suspend AudioContext until a user
- * gesture — call unlock() from a pointer/key handler before any playback.
- */
+export const SPEAKER_PITCH: Record<string, number> = {
+  '': 220,
+  NOA: 240,
+  MAYA: 330,
+  LEO: 180,
+  ZED: 150,
+  IVY: 350,
+  GUARDIAN: 130,
+  'THE CORE': 110,
+  BARISTA: 300,
+  'DEV-AVATAR': 200,
+  INNKEEPER: 260,
+  SHOPKEEPER: 280,
+  VENDOR: 290,
+  TELLER: 270,
+  OFFICER: 190,
+  LIBRARIAN: 250,
+  CURATOR: 230,
+  CLERK: 240,
+  CONCIERGE: 260,
+  GUARD: 170,
+};
+
 export class AudioBus {
   private ctx: AudioContext | null = null;
   private musicTimer: ReturnType<typeof setInterval> | null = null;
@@ -94,6 +111,13 @@ export class AudioBus {
     for (const tone of SFX[id]) {
       this.tone(tone.freq, now + tone.delay, tone.dur, tone.type, tone.vol);
     }
+  }
+
+  speechBlip(speaker: string): void {
+    if (!this.unlocked || !this.ctx) return;
+    const base = SPEAKER_PITCH[speaker] ?? 220;
+    const f = base * (0.94 + Math.random() * 0.12);
+    this.tone(f, this.ctx.currentTime, 0.045, 'square', 0.014);
   }
 
   toggleMusic(): boolean {
@@ -140,7 +164,6 @@ export class AudioBus {
     osc.stop(when + dur + 0.02);
   }
 
-  /** Reserved for composed tracks (P6+). Dynamic import keeps node tests safe. */
   async registerTrack(id: string, src: string[]): Promise<void> {
     const { Howl } = await import('howler');
     this.tracks.set(id, new Howl({ src }));

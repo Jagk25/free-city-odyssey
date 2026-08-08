@@ -1,6 +1,7 @@
 export interface Slide {
   sp: string;
   t: string;
+  bg?: string;
 }
 
 export interface CutsceneState {
@@ -22,14 +23,12 @@ export function isTyping(state: CutsceneState): boolean {
   return slide !== null && state.chars < slide.t.length;
 }
 
-/** Advances the typewriter by n characters. */
 export function tick(state: CutsceneState, n = 1): CutsceneState {
   const slide = currentSlide(state);
   if (!slide) return state;
   return { ...state, chars: Math.min(slide.t.length, state.chars + n) };
 }
 
-/** If typing: complete the text. If complete: next slide. */
 export function advance(state: CutsceneState): CutsceneState {
   if (isTyping(state)) {
     const slide = currentSlide(state)!;
@@ -50,4 +49,8 @@ export function currentText(state: CutsceneState): string {
 
 export function currentSpeaker(state: CutsceneState): string {
   return currentSlide(state)?.sp ?? '';
+}
+
+export function currentBg(state: CutsceneState): string {
+  return currentSlide(state)?.bg ?? 'dark';
 }
