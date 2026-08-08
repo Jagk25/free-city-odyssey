@@ -1,20 +1,17 @@
-# DECISIONS.log — append-only ADRs
+# DECISIONS.log - append-only ADRs
 
-## ADR-0001 … ADR-0015
-See earlier entries: PixiJS renderer, fixed 60Hz sim, JSON content, door mats,
-gesture-gated audio, pure engine modules, renderer-owned ambience, A* grid
-pathfinding, seekers sharing the pathfinder, pure mini-game cores, top-down
-interiors, validated story data, single overlay pause flag, runtime-caching
-service worker + SVG icon, CI npm install until lock committed.
+## ADR-0017: Procedural voice + canvas cinematic engine - 2026-08-08
+Context: the cutscene was static text on a gradient, and the user asked for
+voice + cinematic effects with zero asset budget. Decision: per-speaker pitch
+speech blips via the existing Web Audio bus, and a per-slide animated canvas
+background engine (matrix rain / city dawn / glitch / dark pulse) with
+letterbox slide-in, crossfade transitions, film grain, vignette, ken-burns
+zoom - all CSS + canvas, no video or audio files.
 
-## ADR-0016: The true CI root cause — lock-dependent cache in setup-node — 2026-08-08
-Context: all 18 workflow runs failed in 8-25s, including the first P0 scaffold,
-which could not have failed on tests. Inspection showed setup-node's `cache: npm`
-hashes for a lock file that has never existed, failing the run in setup before
-any real step. ADR-0015's npm-install fix could not help because the cache step
-runs *before* the npm step.
-Decision: remove the cache entirely from setup-node in both workflows; install
-with `npm install --no-audit --no-fund`; isolate Playwright e2e into its own job
-so a browser/dev-server hiccup cannot block typecheck/build or Pages deploy.
-Consequences: setup can no longer fail on the missing lock file; build/deploy
-are independent of e2e stability. Supersedes ADR-0015.
+## ADR-0018: Multi-part push due to size limits - 2026-08-08
+Context: the full v1.1.0 changeset (12 files including large HTML/TS wiring
+files) exceeded the connector's single-call payload limit, causing repeated
+silent truncation. Decision: split into 3 sequential pushes by file group.
+Consequence: world.ts, index.html, and main.ts (the files containing the
+actual leave-building fix and cinematic wiring) could not be included and
+require a dedicated follow-up push, tracked in STATE.md.
