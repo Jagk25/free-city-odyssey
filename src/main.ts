@@ -4,7 +4,7 @@ import { Input, type Action } from './engine/input';
 import { PixiRenderer } from './render/pixi-renderer';
 import { World, type GameUi } from './game/world';
 import { createMinigameHost } from './minigames/runtime';
-import { createCutscene, tick, advance, isDone, currentText, currentSpeaker, type Slide } from './game/cutscenes';
+import { createCutscene, tick, advance, isDone, currentText, currentSpeaker, currentBg, type Slide } from './game/cutscenes';
 import type { DialogueTree } from './game/dialogue';
 import { Hud } from './ui/hud';
 import { save } from './engine/save-system';
@@ -14,6 +14,8 @@ import map from './data/map.json';
 interface InstallPromptEvent extends Event {
   prompt(): Promise<void>;
 }
+
+const GLYPHS = '01$#%&+=<>';
 
 async function boot(): Promise<void> {
   const renderer = new PixiRenderer();
@@ -40,11 +42,10 @@ async function boot(): Promise<void> {
   document.getElementById('music')?.addEventListener('click', () => {
     void audio.unlock().then(() => {
       const on = audio.toggleMusic();
-      document.getElementById('music')!.textContent = on ? '♫ MUSIC: ON' : '♫ MUSIC: OFF';
+      document.getElementById('music')!.textContent = on ? 'MUSIC: ON' : 'MUSIC: OFF';
     });
   });
 
-  // PWA: offline service worker (production only) + install prompt.
   if ('serviceWorker' in navigator && !import.meta.env.DEV) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('./sw.js').catch(() => undefined);
@@ -65,30 +66,114 @@ async function boot(): Promise<void> {
   const mgHost = createMinigameHost(document.getElementById('mg')!, (id) => audio.sfx(id));
   const hud = new Hud();
 
-  // ---- cutscene DOM ----
   const cine = document.getElementById('cine')!;
+  const cineCanvas = document.getElementById('cine-canvas') as HTMLCanvasElement;
+  const cg = cineCanvas.getContext('2d')!;
+  const cinePanel = document.getElementById('cine-panel')!;
   const cineSpeaker = document.getElementById('cine-speaker')!;
   const cineText = document.getElementById('cine-text')!;
   let cineState: ReturnType<typeof createCutscene> | null = null;
   let cineDone: (() => void) | null = null;
+  let cineRunning = false;
+  let cineTime = 0;
+  const rainCols: { x: number; y: number; s: number }[] = [];
+
+  function drawCineBg(dt: number): void {
+    cineTime += dt;
+    const w = (cineCanvas.width = cineCanvas.clientWidth);
+    const h = (cineCanvas.height = cineCanvas.clientHeight);
+    const mode = cineState ? currentBg(cineState) : 'dark';
+
+    if (mode === 'rain') {
+      cg.fillStyle = 'rgba(2,8,4,0.18)';
+      cg.fillRect(0, 0, w, h);
+      if (rainCols.length === 0) {
+        for (let i = 0; i < Math.ceil(w / 16); i += 1) {
+          rainCols.push({ x: i * 16, y: Math.random() * -h, s: 2 + Math.random() * 5 });
+        }
+      }
+      cg.font = '14px monospace';
+      cg.textAlign = 'center';
+      for (const col of rainCols) {
+        col.y += col.s;
+        if (col.y > h + 100) col.y = Math.random() * -200;
+        cg.fillStyle = 'rgba(60,255,140,0.8)';
+        cg.fillText(GLYPHS[Math.floor(Math.random() * GLYPHS.length)]!, col.x, col.y);
+      }
+    } else if (mode === 'city') {
+      const gr = cg.createLinearGradient(0, 0, 0, h);
+      gr.addColorStop(0, '#1a3a70');
+      gr.addColorStop(1, '#e8906a');
+      cg.fillStyle = gr;
+      cg.fillRect(0, 0, w, h);
+      const sunY = h * 0.72 - Math.min(h * 0.4, cineTime * 0.022);
+      cg.fillStyle = '#ffdf70';
+      cg.beginPath();
+      cg.arc(w * 0.5, sunY, 22, 0, 7);
+      cg.fill();
+      cg.fillStyle = '#0a1426';
+      for (let i = 0; i < 14; i += 1) {
+        const bw = 40 + ((i * 37) % 50);
+        const bh = 60 + ((i * 53) % 120);
+        cg.fillRect(i * (w / 13) - 10, h - bh, bw, bh);
+      }
+    } else if (mode === 'glitch') {
+      cg.fillStyle = '#0a1426';
+      cg.fillRect(0, 0, w, h);
+      for (let i = 0; i < 12; i += 1) {
+        const y = Math.random() * h;
+        cg.fillStyle = `rgba(92,255,160,${0.05 + Math.random() * 0.2})`;
+        cg.fillRect(0, y, w, 2 + Math.random() * 8);
+      }
+      if (Math.random() < 0.1) {
+        cg.fillStyle = 'rgba(255,255,255,0.06)';
+        cg.fillRect(Math.random() * w, 0, 2 + Math.random() * 30, h);
+      }
+    } else {
+      cg.fillStyle = '#0a1426';
+      cg.fillRect(0, 0, w, h);
+      const pulse = 0.12 + 0.08 * Math.sin(cineTime * 0.003);
+      const gr = cg.createRadialGradient(w / 2, h / 2, 10, w / 2, h / 2, w * 0.5);
+      gr.addColorStop(0, `rgba(92,255,160,${pulse})`);
+      gr.addColorStop(1, 'rgba(0,0,0,0)');
+      cg.fillStyle = gr;
+      cg.fillRect(0, 0, w, h);
+    }
+  }
+
+  function cineAnimLoop(): void {
+    if (!cineRunning) return;
+    drawCineBg(16.6);
+    requestAnimationFrame(cineAnimLoop);
+  }
+
   const cineInterval = setInterval(() => {
     if (cineState && !isDone(cineState)) {
       cineState = tick(cineState, 1);
       cineText.textContent = currentText(cineState);
+      if (cineState.chars % 3 === 0) audio.speechBlip(currentSpeaker(cineState));
     }
   }, 22);
+
   const cineNext = (): void => {
     if (!cineState) return;
     cineState = advance(cineState);
     if (isDone(cineState)) {
       cine.classList.add('hidden');
+      cine.classList.remove('open');
+      cineRunning = false;
       const done = cineDone;
       cineState = null;
       cineDone = null;
       done?.();
     } else {
-      cineSpeaker.textContent = currentSpeaker(cineState);
-      cineText.textContent = currentText(cineState);
+      cinePanel.classList.add('fade');
+      setTimeout(() => {
+        if (!cineState) return;
+        cineSpeaker.textContent = currentSpeaker(cineState);
+        cineText.textContent = currentText(cineState);
+        cinePanel.classList.remove('fade');
+      }, 260);
     }
   };
   document.getElementById('cine-bg')!.addEventListener('click', cineNext);
@@ -98,7 +183,6 @@ async function boot(): Promise<void> {
     cineNext();
   });
 
-  // ---- dialogue DOM ----
   const dlg = document.getElementById('dlg')!;
   const dlgSpeaker = document.getElementById('dlg-speaker')!;
   const dlgText = document.getElementById('dlg-text')!;
@@ -130,6 +214,7 @@ async function boot(): Promise<void> {
         }
         dlgSpeaker.textContent = node.sp;
         dlgText.textContent = node.t;
+        audio.speechBlip(node.sp);
         dlgChoices.innerHTML = '';
         const choices = node.c ?? [{ t: 'Leave' }];
         for (const ch of choices) {
@@ -152,9 +237,14 @@ async function boot(): Promise<void> {
     playCutscene: (slides: Slide[], onDone) => {
       cineState = createCutscene(slides);
       cineDone = onDone;
+      cineTime = 0;
+      rainCols.length = 0;
       cineSpeaker.textContent = currentSpeaker(cineState);
       cineText.textContent = '';
       cine.classList.remove('hidden');
+      cine.classList.add('open');
+      cineRunning = true;
+      cineAnimLoop();
     },
     setHud: (data) => hud.update(data),
     drawMinimap: (questTarget) => {
@@ -173,9 +263,8 @@ async function boot(): Promise<void> {
 
   document.getElementById('leave')?.addEventListener('click', () => world.leaveInterior());
 
-  // Pause menu.
   const pause = document.getElementById('pause')!;
-  const togglePause = (): void => { pause.classList.toggle('hidden'); };
+  const togglePause = (): void => pause.classList.toggle('hidden');
   document.getElementById('p-resume')!.onclick = togglePause;
   document.getElementById('p-save')!.onclick = () => {
     save(world.saveState());
@@ -189,7 +278,6 @@ async function boot(): Promise<void> {
     location.reload();
   };
 
-  // Debug panel.
   document.getElementById('dbg-weather')!.onclick = () => {
     const kinds = ['clear', 'rain', 'fog'];
     world.setWeather(kinds[Math.floor(Math.random() * kinds.length)]!);
@@ -222,6 +310,8 @@ async function boot(): Promise<void> {
     },
   };
 
+  const leaveBtn = document.getElementById('leave');
+
   const loop = new GameLoop({
     update: (dt) => {
       if (input.wasPressed('pause')) togglePause();
@@ -233,6 +323,7 @@ async function boot(): Promise<void> {
     },
     render: (alpha) => {
       world.render(alpha);
+      leaveBtn?.classList.toggle('hidden', world.getMode() !== 'interior');
       lastPlayerPos = world.playerPos();
       lastNpcPos = world.npcPositions().map((n) => ({ x: n.x, y: n.y, color: '#8ddcff' }));
     },
