@@ -111,14 +111,13 @@ function drawPropBase(gfx: Graphics, prop: PropData): void {
 }
 
 function drawBuildingBase(gfx: Graphics, b: BuildingData): Text {
-  const corners = [
-    gridToScreen(b.x, b.y),
+  const corners: [{ x: number; y: number }, { x: number; y: number }, { x: number; y: number }, { x: number; y: number }] = [    gridToScreen(b.x, b.y),
     gridToScreen(b.x + b.w, b.y),
     gridToScreen(b.x + b.w, b.y + b.d),
     gridToScreen(b.x, b.y + b.d),
   ];
-  const top = corners.map((c) => ({ x: c.x, y: c.y - b.h }));
-  const col = parseInt(b.color.slice(1), 16);
+  const top: [{ x: number; y: number }, { x: number; y: number }, { x: number; y: number }, { x: number; y: number }] = corners.map((c) => ({ x: c.x, y: c.y - b.h })) as typeof top;  con
+  st col = parseInt(b.color.slice(1), 16);
 
   gfx
     .poly([
