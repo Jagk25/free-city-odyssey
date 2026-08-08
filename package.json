@@ -1,9 +1,9 @@
 {
   "name": "free-city-odyssey",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.1.0",
   "type": "module",
-  "description": "Free City: Odyssey — a living-city story RPG in the browser. v1.0.0.",
+  "description": "Free City: Odyssey - a living-city story RPG in the browser. v1.1.0 Cinematic Update.",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
@@ -22,7 +22,6 @@
     "@types/howler": "^2.2.12",
     "eslint": "^9.24.0",
     "prettier": "^3.5.3",
-    "@types/node": "^22.0.0",
     "typescript": "^5.8.3",
     "vite": "^7.0.0",
     "vitest": "^3.1.4"

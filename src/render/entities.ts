@@ -27,7 +27,8 @@ function drawCharacter(gfx: Graphics, e: EntityPose, timeMs: number): void {
   const hair = parseInt(e.hair.slice(1), 16);
   const body = parseInt(e.color.slice(1), 16);
 
-  gfx.ellipse(p.x, p.y + 1, 14, 5).fill({ color: 0x030914, alpha: 0.5 });
+  gfx.ellipse(p.x, p.y + 1, 16, 6).fill({ color: 0x030914, alpha: 0.22 });
+  gfx.ellipse(p.x, p.y + 1, 12, 4).fill({ color: 0x030914, alpha: 0.35 });
 
   const la = st * 5.5;
   const ra = -st * 5.5;
@@ -40,6 +41,7 @@ function drawCharacter(gfx: Graphics, e: EntityPose, timeMs: number): void {
     .lineTo(p.x + 5 + ra, p.y - 2)
     .stroke({ width: 5, color: 0x121a2a, cap: 'round' });
 
+  gfx.rect(p.x - 9, p.y - 29 + bob, 18, 17).fill(0x0a1220);
   gfx.rect(p.x - 8, p.y - 28 + bob, 16, 15).fill(body);
   gfx.rect(p.x - 8, p.y - 28 + bob + 12, 16, 3).fill(shade(e.color, -40));
 

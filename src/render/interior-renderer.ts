@@ -16,7 +16,6 @@ const FURN_COLORS: Record<string, number> = {
   plant: 0x2a5a3a,
 };
 
-/** Top-down interior scene (rooms are small — full redraw each frame is cheap). */
 export class InteriorRenderer {
   readonly container = new Container();
   private readonly gfx = new Graphics();
@@ -25,7 +24,7 @@ export class InteriorRenderer {
     style: { fill: 0xffffff, fontFamily: 'monospace', fontSize: 15, fontWeight: 'bold' },
   });
   private readonly hint = new Text({
-    text: 'WASD/Arrows to move · E to interact',
+    text: 'WASD/Arrows to move . E to interact',
     style: { fill: 0x9fc9e8, fontFamily: 'monospace', fontSize: 11 },
   });
 
@@ -106,6 +105,10 @@ export class InteriorRenderer {
     this.gfx.rect(px - 8, py - 6 + pbob, 16, 14).fill(0x3ab8ff);
     this.gfx.circle(px, py - 14 + pbob, 7).fill(0xefbd95);
     this.gfx.rect(px - 7, py - 19 + pbob, 14, 6).fill(0x18294c);
+
+    const exitPulse = 0.3 + 0.15 * Math.sin(timeMs * 0.006);
+    this.gfx.rect(ox + 3.2 * RTW, oy + (ROOM_H - 0.55) * RTW, 1.6 * RTW, 10).fill({ color: 0xffdf70, alpha: exitPulse });
+    this.gfx.rect(ox + 3.2 * RTW, oy + (ROOM_H - 0.55) * RTW, 1.6 * RTW, 10).stroke({ width: 1, color: 0xffdf70, alpha: 0.7 });
 
     this.title.text = room.name;
     this.title.position.set(width / 2, oy - 28);
