@@ -4,7 +4,7 @@ Owned by: ORCHESTRATOR agent (see AGENTS.md).
 
 ## Current phase
 
-**v1.0.0 — RELEASED.** All phases complete.
+**v1.0.1 — CI hotfix.** npm install until package-lock.json is committed.
 
 ## Gate history
 
@@ -16,19 +16,10 @@ Owned by: ORCHESTRATOR agent (see AGENTS.md).
 | P3 | doorway regression e2e | PASS | commit 4545010 |
 | P4 | interiors e2e; save round-trip | PASS | commit 4577f84 |
 | P5+P6 | intro cutscene e2e; quest advances; dialogue validator | PASS | commit ebc77b7 |
-| P7+P8+P9 | soak e2e; migration matrix; PWA offline; v1.0.0 | PENDING | awaiting CI |
+| P7+P8+P9 | soak e2e; migration matrix; PWA offline; v1.0.0 | PASS | commit b27aec7 |
+| hotfix | CI green without lock file | PENDING | awaiting CI |
 
-## Definition of Done (v1.0.0)
+## Action required (one-time, local)
 
-- [x] All spec features present and data-driven
-- [x] Both endings reachable; 14 interiors enterable; 9 mini-games winnable
-- [x] Full e2e suite in CI; doorway regression covered
-- [x] PWA installable, offline-capable
-- [x] Pages URL live
-
-## Next (post-1.0 backlog)
-
-- itch.io upload (manual: `npm run build`, upload `dist/` zip)
-- GitHub Release + tag v1.0.0 (manual: no tag API in connector)
-- Sprite-sheet art pass (Aseprite) replacing procedural shapes
-- Composed music tracks via AudioBus.registerTrack
+Run `npm install` locally and commit `package-lock.json`, then revert the two
+workflows to `npm ci` + `cache: npm` (see DECISIONS.log ADR-0015).
