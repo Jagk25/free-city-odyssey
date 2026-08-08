@@ -11,6 +11,7 @@ import {
   nextReactionZone,
   reactionHit,
   shuffled,
+  wiresMatch,
   type Suspect,
 } from './logic';
 
