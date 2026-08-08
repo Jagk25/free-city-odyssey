@@ -7,6 +7,11 @@ test('enter cafe, pick up item, open terminal, leave', async ({ page }) => {
   await page.goto('/');
   await expect(page.locator('canvas')).toBeVisible();
 
+  // Skip the intro cutscene so the sim is not frozen by the overlay.
+  await page.evaluate(() => {
+    (window as unknown as { __FCO_DEBUG__: { skipCutscene?: () => void } }).__FCO_DEBUG__.skipCutscene?.();
+  });
+
   // Teleport to the cafe door mat and press E to enter.
   await page.evaluate(() => {
     (window as unknown as { __FCO_DEBUG__: { teleport: (x: number, y: number) => void } }).__FCO_DEBUG__.teleport(4, 10.9);

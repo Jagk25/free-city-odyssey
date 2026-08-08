@@ -202,6 +202,7 @@ export class World {
     });
   }
 
+  /** Pause-menu save + minimap read accessors (called from main.ts). */
   saveState(): SaveGame {
     return this.state;
   }

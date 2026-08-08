@@ -4,7 +4,7 @@ Owned by: ORCHESTRATOR agent (see AGENTS.md).
 
 ## Current phase
 
-**v1.0.1 — CI hotfix.** npm install until package-lock.json is committed.
+**v1.0.2 — compile hotfix.** Added missing World.saveState/playerPos; interiors e2e skips intro.
 
 ## Gate history
 
@@ -17,9 +17,11 @@ Owned by: ORCHESTRATOR agent (see AGENTS.md).
 | P4 | interiors e2e; save round-trip | PASS | commit 4577f84 |
 | P5+P6 | intro cutscene e2e; quest advances; dialogue validator | PASS | commit ebc77b7 |
 | P7+P8+P9 | soak e2e; migration matrix; PWA offline; v1.0.0 | PASS | commit b27aec7 |
-| hotfix | CI green without lock file | PENDING | awaiting CI |
+| hotfix 1 | CI without lock file | PASS | commit f23e5c2 |
+| hotfix 2 | typecheck + e2e green | PENDING | awaiting CI |
 
-## Action required (one-time, local)
+## Root cause (hotfix 2)
 
-Run `npm install` locally and commit `package-lock.json`, then revert the two
-workflows to `npm ci` + `cache: npm` (see DECISIONS.log ADR-0015).
+First real compile surfaced two defects from P5+P6/v1.0.0: main.ts called
+World.saveState()/playerPos() which were never defined (TS2339), and the
+interiors e2e pressed E while the intro cutscene overlay froze the sim.
