@@ -13,10 +13,19 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      # NOTE: switch back to `npm ci` + `cache: npm` once package-lock.json is committed.
-      - run: npm install
+      - run: npm install --no-audit --no-fund
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+
+  test-e2e:
+    runs-on: ubuntu-latest
+    needs: build-test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-audit --no-fund
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
