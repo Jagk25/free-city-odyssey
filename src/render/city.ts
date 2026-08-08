@@ -137,7 +137,33 @@ function drawBuildingBase(gfx: Graphics, b: BuildingData): Text {
     .fill(col);
   gfx
     .poly([top[0].x, top[0].y, top[1].x, top[1].y, top[2].x, top[2].y, top[3].x, top[3].y])
-    .stroke({ width: 3, color: shade(b.color, -60) });
+    const corners = [
+      gridToScreen(b.x, b.y),
+      gridToScreen(b.x + b.w, b.y),
+      gridToScreen(b.x + b.w, b.y + b.d),
+      gridToScreen(b.x, b.y + b.d),
+    ];
+    const top = corners.map((c) => ({ x: c.x, y: c.y - b.h }));
+    const col = parseInt(b.color.slice(1), 16);
+
+    gfx
+      .poly([
+        corners[0]!.x + 5, corners[0]!.y + 7, corners[1]!.x + 5, corners[1]!.y + 7,
+        corners[2]!.x + 5, corners[2]!.y + 7, corners[3]!.x + 5, corners[3]!.y + 7,
+      ])
+      .fill({ color: 0x000000, alpha: 0.22 });
+    gfx
+      .poly([corners[0]!.x, corners[0]!.y, corners[3]!.x, corners[3]!.y, top[3]!.x, top[3]!.y, top[0]!.x, top[0]!.y])
+      .fill(shade(b.color, -70));
+    gfx
+      .poly([corners[1]!.x, corners[1]!.y, corners[2]!.x, corners[2]!.y, top[2]!.x, top[2]!.y, top[1]!.x, top[1]!.y])
+      .fill(shade(b.color, -95));
+    gfx
+      .poly([top[0]!.x, top[0]!.y, top[1]!.x, top[1]!.y, top[2]!.x, top[2]!.y, top[3]!.x, top[3]!.y])
+      .fill(col);
+    gfx
+      .poly([top[0]!.x, top[0]!.y, top[1]!.x, top[1]!.y, top[2]!.x, top[2]!.y, top[3]!.x, top[3]!.y])
+      .stroke({ width: 3, color: shade(b.color, -60) });
 
   const q = gridToScreen(b.x + b.w / 2, b.y + b.d / 2);
 
